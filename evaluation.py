@@ -4,7 +4,7 @@ from collections import Counter
 from sklearn.utils.linear_assignment_ import linear_assignment
 
 
-class Document:
+class EvaluationDocument:
     def __init__(self,gold_cluster,predict_cluster):
         self.gold_cluster = gold_cluster
         self.predict_cluster = predict_cluster
@@ -18,7 +18,6 @@ class Document:
             for word in item:
                 rd[word] = tuple(item)
         return rd
-
 
 
 def f1(p_num, p_den, r_num, r_den, beta=1):
@@ -179,7 +178,7 @@ if __name__ == "__main__":
         print "gold:",(gold)
         print "predict:",(predict)
         
-        document = Document(gold,predict)
+        document = EvaluationDocument(gold,predict)
 
         p,r,f = evaluate_documents([document],b_cubed)
         print "BCUBED: recall: %f precision: %f  f1: %f"%(r,p,f)

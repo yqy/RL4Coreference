@@ -1,16 +1,22 @@
 import argparse
 
+DATA_DIT="/Users/yqy/data/coreference/annotation_chinese/"
 #parse arguments
-parser = argparse.ArgumentParser(description="Experiemts for ZP resolution (by qyyin)\n")
-parser.add_argument("-data",default="None",help="specify data file")
-parser.add_argument("-type",default="None",help="azp:Get azp feature ***\n\r res:Get res feature")
-parser.add_argument("-res_t",default="0.5",help="Threshold for resolution classification")
-parser.add_argument("-azp_t",default="0.5",help="Threshold for AZP classification")
-parser.add_argument("-res_pos",default="1",help="Postive instance for resolution classification")
+parser = argparse.ArgumentParser(description="Experiemts for Coreference Resolution (by qyyin)\n")
+
+parser.add_argument("-train_data",default = DATA_DIT + "data_raw/train",help="specify train data file")
+parser.add_argument("-train_gold",default = DATA_DIT + "gold/train",help="specify train data file with gold chains")
+parser.add_argument("-dev_data",default = DATA_DIT + "data_raw/dev",help="specify dev data file")
+parser.add_argument("-dev_gold",default = DATA_DIT + "gold/dev",help="specify dev data file with gold chains")
+parser.add_argument("-test_data",default = DATA_DIT + "data_raw/test",help="specify test data file")
+parser.add_argument("-test_gold",default = DATA_DIT + "gold/test",help="specify test data file with gold chains")
+
 parser.add_argument("-embedding",default="/Users/yqy/work/data/word2vec/embedding.ontonotes",help="embedding dir")
 parser.add_argument("-embedding_dimention",default=100,type=int,help="embedding dimention")
-parser.add_argument("-test_data",default="None",help="Test data for DeepLearning")
 
+
+
+#parameters for neural network
 parser.add_argument("-echos",default=10,type=int,help="Echo Times")
 parser.add_argument("-lr",default=0.03,type=float,help="Learning Rate")
 parser.add_argument("-batch",default=15,type=int,help="batch size")
