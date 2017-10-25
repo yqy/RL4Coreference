@@ -9,11 +9,31 @@ class Mention():
     # mention id 是在gold里的id对应
     # mention num 是在自己篇章中 按顺序来的
     def __init__(self,mention_dict,language="cn"):
+        '''
+            dep_relation = 'assmod'
+            dep_parent = w
+            head_index = 16 
+
+            doc_id = 0
+            sent_num = 49
+            sentence = [w1,w2,w3...] 
+            words = [w3,w4]
+            
+            mention_id = 80
+            mention_num = 344
+            mention_type = 'NOMINAL'
+            start_index = 16
+sent_num            end_index = 17
+            contained-in-other-mention = 0
+
+        '''
+
+
         self.dep_relation = mention_dict["dep_relation"]
         self.sent_num = mention_dict["sent_num"]
         self.head_index = mention_dict["head_index"]
         self.doc_id = mention_dict["doc_id"]
-        self.contained_in_other_mention = mention_dict["contained-in-other-mention"]
+        self.contained_in_other_mention = int(mention_dict["contained-in-other-mention"])
         self.mention_type = mention_dict["mention_type"]
 
         self.mention_num = mention_dict["mention_num"] ## just an index
@@ -33,6 +53,38 @@ class Mention():
 
 class Document():
     def __init__(self,json_dict,gold_chain,language="cn"):
+        '''
+        self.doc_type: int, 0 or 1 dont know its meaning
+        self.doc_id: number of document
+        self.doc_source: str, example: bc,mz,tc...
+        
+        self.sentences: list, for each list, is a list of sentence  
+            example:[ 
+                        [w11,w12,...],
+                        [w21,w22,...],
+                        [w21,w22,...],
+                        ...
+                    ]
+        self.document_words: list, for each word in the document
+
+        self.mention: See class Mention for more details
+        self.pair_feature: dict, (int mention1(mention_num), int mention2(mention_num)) = numpy.array([0,1,0,1..])
+            name of each feature: [u'same-speaker', u'antecedent-is-mention-speaker', u'mention-is-antecedent-speaker',
+                                   u'relaxed-head-match', u'exact-string-match', u'relaxed-string-match']
+
+        self.gold_chain: list, gold chains, consists of the mention_id
+            example: [
+                     [1,2,5],
+                     [3,7],
+                     [4,6]
+                     ]
+
+        self.gold_chain_dict: dict, mention_id -> its chain
+            exmaple: dict[1] = [1,2,5]
+                     dict[2] = [1,2,5]
+                     dict[3] = [3,7]
+        '''
+
         ## document_features
         doc_features = json_dict["document_features"]
         self.doc_type = doc_features["type"]
@@ -42,11 +94,14 @@ class Document():
         ## sentences
         documents_sentence = json_dict["sentences"]
         self.sentences = []
+        self.document_words = []
         for sentence in documents_sentence:
             if language == "cn":
                 self.sentences.append([x.encode('utf-8') for x in sentence])
             else:
                 self.sentences.append(sentence)
+        for sentence in self.document_words:
+            self.document_words += sentence
 
         ## build mentions
         mention_dict = json_dict["mentions"]
@@ -64,7 +119,7 @@ class Document():
         ## gold_chain
         self.gold_chain = gold_chain
         self.gold_chain_dict = {}
-        for chian in self.gold_chain:
+        for chain in self.gold_chain:
             for mention_item in chain:
                 self.gold_chain_dict[mention_item] = chain
 
@@ -90,6 +145,7 @@ def main():
         gold_chain = js[js.keys()[0]]
 
         document = Document(s,gold_chain)
+        print document.doc_type,document.doc_source
 
 if __name__ == "__main__":
     main()

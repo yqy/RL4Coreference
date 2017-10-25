@@ -4,6 +4,11 @@ from numpy import linalg
 from numpy import array
 from numpy import inner
 
+import pickle
+
+import cPickle
+sys.setrecursionlimit(1000000)
+
 def cosin(Al,Bl):
     #Al,Bl 向量的list
     A = array(Al)
@@ -23,28 +28,21 @@ def cosin(Al,Bl):
 
 class Word2Vec:
     word_dict = {}
-    def __init__(self,w2v_dir="../data/word2vec",dimention=100):
+    def __init__(self,w2v_dir="",dimention=50):
+        if w2v_dir == "":
+            print >> sys.stderr, "Please give the embedding file"
+            return
         self.dimention = dimention
-        f = open(w2v_dir)
-        line = f.readline()
-        while True:
-            line = f.readline()
-            if not line:break
-            line = line.strip().split(" ")
-            word = line[0]
-            vector = line[1:]
-            vec = [float(item) for item in vector]
-            self.word_dict[word] = array(vec)
+        f = file(w2v_dir, 'rb')
+        embedding_list = cPickle.load(f)
+        for word,em in embedding_list:
+            self.word_dict[word] = em
+        print >> sys.stderr,"Total %d word embedding!"%len(embedding_list)
     def get_vector_by_word(self,word):
         if word in self.word_dict:
             return self.word_dict[word]
         else:
             return array([0.0]*self.dimention)
-    def get_vector_by_word_dl(self,word):
-        if word in self.word_dict:
-            return self.word_dict[word]
-        else:
-            return None
 
     def get_vector_by_list(self,wl):
         result = array([0.0]*self.dimention)
@@ -57,18 +55,20 @@ class Word2Vec:
 
 class Word2VecIndex:
     word_dict = {}
-    def __init__(self,w2v_dir="../data/word2vec",dimention=100):
+    def __init__(self,w2v_dir="",dimention=50):
         self.dimention = dimention
-        f = open(w2v_dir)
-        line = f.readline()
-        index = 1
-        while True:
-            line = f.readline()
-            if not line:break
-            line = line.strip().split(" ")
-            word = line[0]
+        if w2v_dir == "":
+            print >> sys.stderr, "Please give the embedding file"
+            return
+
+        self.dimention = dimention
+        f = file(w2v_dir, 'rb')
+        embedding_list = cPickle.load(f)
+        index = 1 ## line 0 is [0,0,0,0,0...0]
+        for word,em in embedding_list:
             self.word_dict[word] = index
             index += 1
+
     def get_index_by_word(self,word):
         if word in self.word_dict:
             return self.word_dict[word]
@@ -76,7 +76,7 @@ class Word2VecIndex:
             return -1
 
 def main():
-    w2v = Word2Vec("../data/word2vec")
+    w2v = Word2Vec("/Users/yqy/data/coreference/embedding/embedding.cn",64)
     print "go"
     while True:
         line = sys.stdin.readline()
@@ -84,21 +84,35 @@ def main():
         line = line.strip().split(" ")
         l1 = w2v.get_vector_by_word(line[0].strip())
         l2 = w2v.get_vector_by_word(line[1].strip())
-        #print l1
-        #print l2
         print cosin(l1,l2)
 
-def tt():
-    w2v = Word2Vec()
-    l1 = array(w2v.get_vector_by_list(["国王","你好"]))
-    #l2 = array(w2v.get_vector("男"))
-    #l3 = array(w2v.get_vector("女"))
-    #l = l1 - l2 + l3
-    #ll = w2v.get_vector("皇后") 
-    #print cosin(ll,list(l))
-    print l1
+def generate_embedding_file_from_Kevin():
+    # generate the word embedding file from Kevin's github file
+    # https://github.com/clarkkev/deep-coref
+    # "We use 50 dimensional word2vec embeddings for English (link) and 64 dimenensional polyglot embeddings for Chinese (link) in our paper."
 
-    
+    # for english embedding file
+    f = open("/Users/yqy/Downloads/w2v_50d.txt")
+    embedding_list = []
+    while True:
+        line = f.readline()
+        if not line:break
+        line = line.strip().split("\t")
+        word = line[0]
+        embedding = array([ float(x) for x in line[1].split(" ")])
+        embedding_list.append((word,embedding))
+    save_f = file('./embedding.en', 'wb')
+    cPickle.dump(embedding_list, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+
+    # for chinese embedding file
+    words, embeddings = pickle.load(open('/Users/yqy/Downloads/polyglot-zh.pkl', 'rb'))
+    embedding_list = []
+    for i in range(len(words)):
+        word = words[i].encode("utf8")
+        embedding = embeddings[i]
+        embedding_list.append((word,embedding))
+    save_f = file('./embedding.cn', 'wb')
+    cPickle.dump(embedding_list, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+
 if __name__ == "__main__":
     main()
-    #tt()

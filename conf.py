@@ -11,10 +11,8 @@ parser.add_argument("-dev_gold",default = DATA_DIT + "gold/dev",help="specify de
 parser.add_argument("-test_data",default = DATA_DIT + "data_raw/test",help="specify test data file")
 parser.add_argument("-test_gold",default = DATA_DIT + "gold/test",help="specify test data file with gold chains")
 
-parser.add_argument("-embedding",default="/Users/yqy/work/data/word2vec/embedding.ontonotes",help="embedding dir")
-parser.add_argument("-embedding_dimention",default=100,type=int,help="embedding dimention")
-
-
+parser.add_argument("-language",default = "cn",help="specify language")
+parser.add_argument("-embedding",default="/Users/yqy/data/coreference/embedding/embedding.",help="embedding dir")
 
 #parameters for neural network
 parser.add_argument("-echos",default=10,type=int,help="Echo Times")
