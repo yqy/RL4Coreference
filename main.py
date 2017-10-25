@@ -188,11 +188,15 @@ def main():
     train_docs,dev_docs,test_docs = get_doc_data()
 
     ## generate training inputs
+    doc_mention_arrays = []
+    doc_pair_arrays = []
+    
+    start_time = timeit.default_timer()
+
     for doc in train_docs:
         mention_arrays = []
         pair_arrays = {}
 
-        start_time = timeit.default_timer()
         
         ## feature and embedding for each Mention
         for mention in doc.mentions:
@@ -204,20 +208,28 @@ def main():
             for j in range(i+1,len(doc.mentions)):
                 pair_feature = get_pair_embedding(i,j,doc)
                 pair_arrays[(i,j)] = pair_feature
+        
+        doc_mention_arrays.append(mention_arrays)
+        doc_pair_arrays.append(pair_arrays)
 
-        print >> sys.stderr,"SV mention_array_data to ./model/mention_array_train."+args.language
-        save_f = file('./model/mention_array_train.'+args.language, 'wb')
-        cPickle.dump((mention_arrays,pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-        save_f.close()
-        end_time = timeit.default_timer()
-        print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
+    print >> sys.stderr,"SV mention_array_data to ./model/mention_array_train."+args.language
+    save_f = file('./model/mention_array_train.'+args.language, 'wb')
+    cPickle.dump((doc_mention_arrays,doc_pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+    save_f.close()
+    end_time = timeit.default_timer()
+    print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
+
+
 
     ## generate dev inputs
+    doc_mention_arrays = []
+    doc_pair_arrays = []
+    
+    start_time = timeit.default_timer()
     for doc in dev_docs:
         mention_arrays = []
         pair_arrays = {}
 
-        start_time = timeit.default_timer()
         
         ## feature and embedding for each Mention
         for mention in doc.mentions:
@@ -229,16 +241,23 @@ def main():
             for j in range(i+1,len(doc.mentions)):
                 pair_feature = get_pair_embedding(i,j,doc)
                 pair_arrays[(i,j)] = pair_feature
+        doc_mention_arrays.append(mention_arrays)
+        doc_pair_arrays.append(pair_arrays)
 
-        print >> sys.stderr,"SV mention_array_data to ./model/mention_array_dev."+args.language
-        save_f = file('./model/mention_array_dev.'+args.language, 'wb')
-        cPickle.dump((mention_arrays,pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-        save_f.close()
-        end_time = timeit.default_timer()
-        print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
+    print >> sys.stderr,"SV mention_array_data to ./model/mention_array_dev."+args.language
+    save_f = file('./model/mention_array_dev.'+args.language, 'wb')
+    cPickle.dump((doc_mention_arrays,doc_pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+    save_f.close()
+    end_time = timeit.default_timer()
+    print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
 
 
     ## generate test inputs
+
+    start_time = timeit.default_timer()
+    doc_mention_arrays = []
+    doc_pair_arrays = []
+
     for doc in test_docs:
         mention_arrays = []
         pair_arrays = {}
@@ -255,13 +274,15 @@ def main():
             for j in range(i+1,len(doc.mentions)):
                 pair_feature = get_pair_embedding(i,j,doc)
                 pair_arrays[(i,j)] = pair_feature
+        doc_mention_arrays.append(mention_arrays)
+        doc_pair_arrays.append(pair_arrays)
 
-        print >> sys.stderr,"SV mention_array_data to ./model/mention_array_test."+args.language
-        save_f = file('./model/mention_array_test.'+args.language, 'wb')
-        cPickle.dump((mention_arrays,pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-        save_f.close()
-        end_time = timeit.default_timer()
-        print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
+    print >> sys.stderr,"SV mention_array_data to ./model/mention_array_test."+args.language
+    save_f = file('./model/mention_array_test.'+args.language, 'wb')
+    cPickle.dump((doc_mention_arrays,doc_pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+    save_f.close()
+    end_time = timeit.default_timer()
+    print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
 
 
         
