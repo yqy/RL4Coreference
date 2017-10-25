@@ -5,6 +5,7 @@ import os
 import json
 import random
 import numpy
+import timeit
 
 from conf import *
 
