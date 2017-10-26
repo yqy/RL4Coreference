@@ -20,6 +20,9 @@ def read_from_file(fil,goldf,language):
         line = f.readline()
         if not line:break
         i += 1
+
+        if i >= 5:
+            break 
         
         start_time = timeit.default_timer()
         line = line.strip()
