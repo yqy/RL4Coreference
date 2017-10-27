@@ -226,6 +226,5 @@ def main():
     test_doc_mention_arrays,test_doc_pair_arrays = get_arrays(test_docs,"test",w2v)
     dev_doc_mention_arrays,dev_doc_pair_arrays = get_arrays(dev_docs,"dev",w2v)
 
-        
 if __name__ == "__main__":
     main()
