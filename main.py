@@ -93,6 +93,10 @@ def main():
     test_doc_mention_arrays,test_doc_pair_arrays = DataGenerate.get_arrays(test_docs,"test",w2v)
     dev_doc_mention_arrays,dev_doc_pair_arrays = DataGenerate.get_arrays(dev_docs,"dev",w2v)
 
+    train_docs = None
+    dev_docs = None
+    test_docs = None
+
     for i in range(len(train_doc_mention_arrays)):
         print "hehe"
         generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i])
