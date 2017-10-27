@@ -32,6 +32,8 @@ def main():
 
     train_docs,dev_docs,test_docs = DataGenerate.get_doc_data()
 
+    # for mention_array: list
+    # for mention_pair_array: dict
     train_doc_mention_arrays,train_doc_pair_arrays = DataGenerate.get_arrays(train_docs,"train",w2v)
     test_doc_mention_arrays,test_doc_pair_arrays = DataGenerate.get_arrays(test_docs,"test",w2v)
     dev_doc_mention_arrays,dev_doc_pair_arrays = DataGenerate.get_arrays(dev_docs,"dev",w2v)
