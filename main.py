@@ -21,6 +21,61 @@ print >> sys.stderr, os.getpid()
 
 random.seed(args.random_seed)
 
+def choose_action(action_probability):
+    return 0
+
+def get_reward(cluster_info,gold_info,max_cluster_num):
+    predict = [[]]*max_cluster_num
+    for mention_num in cluster_info.keys():
+        cluster_num = cluster_info[mention_num]
+        predict[cluster_num].append(mention_num)
+    print gold_info,predict
+    return 0
+
+def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+    train_case = []
+    action_case = []
+    reward = 0.0
+
+    cluster_info = {}
+    new_cluster_num = 0
+
+    for i in range(len(doc_mention_arrays)):
+        mention_array = doc_mention_arrays[i][0]
+        this_train_case = []
+
+        ## add a Noun cluster
+        Noun_cluster_array = numpy.array([0.0]*len(mention_array))
+        this_input = numpy.append(mention_array,Noun_cluster_array)
+        this_input = numpy.append(this_input,numpy.array([0.0]*28))
+        this_train_case.append(this_input)
+
+        for j in range(0,i):
+            mention_in_cluster_array = doc_mention_arrays[j][0]
+            pair_features = doc_pair_arrays[(j,i)] 
+            this_input = numpy.append(mention_array,mention_in_cluster_array)
+            this_input = numpy.append(this_input,pair_features) 
+            this_train_case.append(this_input)
+
+        this_train_case = numpy.array(this_train_case)
+
+        #action_probability = network.predict(this_train_case)
+        action_probability = 1
+
+        action = choose_action(action_probability)
+        action_case.append(action)
+
+        if (action-1) in cluster_info:
+            should_cluster = cluster_info[action-1]
+        else:
+            should_cluster = new_cluster_num
+            new_cluster_num += 1
+
+        cluster_info[i] = should_cluster
+    print cluster_info
+
+    reward = get_reward(cluster_info,gold_chain,new_cluster_num)
+    
 def main():
 
     embedding_dir = args.embedding+args.language
@@ -37,6 +92,10 @@ def main():
     train_doc_mention_arrays,train_doc_pair_arrays = DataGenerate.get_arrays(train_docs,"train",w2v)
     test_doc_mention_arrays,test_doc_pair_arrays = DataGenerate.get_arrays(test_docs,"test",w2v)
     dev_doc_mention_arrays,dev_doc_pair_arrays = DataGenerate.get_arrays(dev_docs,"dev",w2v)
+
+    for i in range(len(train_doc_mention_arrays)):
+        print "hehe"
+        generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i])
 
 if __name__ == "__main__":
     main()

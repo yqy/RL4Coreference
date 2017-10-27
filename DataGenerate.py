@@ -174,7 +174,7 @@ def get_pair_embedding(i,j,doc):
 def get_arrays(docs,typ,w2v):
 
     if os.path.isfile("./model/mention_array_%s."%typ+args.language):
-        print >> sys.stderr,"Read test data from ./model/mention_array_%s."%typ+args.language
+        print >> sys.stderr,"Read data from ./model/mention_array_%s."%typ+args.language
         read_f = file("./model/mention_array_%s."%typ+args.language, 'rb')
         doc_mention_arrays,doc_pair_arrays = cPickle.load(read_f)
     else:

@@ -26,6 +26,8 @@ class NetWork():
     def __init__(self,n_inpt,n_hidden):
         ## embedding = 832 for cn, 650 for en
 
+        activate=ReLU
+
         dropout_prob = T.scalar("probability of dropout")
 
         self.params = []
@@ -35,12 +37,17 @@ class NetWork():
         w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer",ones=False) 
         self.params += [w_h_1,b_h_1]
 
-        self.hidden_layer = tanh(T.dot(self.x_inpt,w_h_1) + b_h_1)
+        self.hidden_layer_1 = activate(T.dot(self.x_inpt,w_h_1) + b_h_1)
 
-        w_h_2,b_h_2 = init_weight(n_hidden,1,pre="output_layer",ones=False) 
+        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden,pre="hidden_layer",ones=False) 
         self.params += [w_h_2,b_h_2]
 
-        self.output_layer = tanh(T.dot(self.hidden_layer,w_h_2) + b_h_2)
+        self.hidden_layer_2 = activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2)
+
+        w_h_3,b_h_3 = init_weight(n_hidden,1,pre="output_layer",ones=False) 
+        self.params += [w_h_3,b_h_3]
+
+        self.output_layer = activate(T.dot(self.hidden_layer_2,w_h_3) + b_h_3)
 
         self.policy = softmax(self.output_layer.flatten())[0]
 
