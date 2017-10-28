@@ -72,7 +72,7 @@ class Document():
             name of each feature: [u'same-speaker', u'antecedent-is-mention-speaker', u'mention-is-antecedent-speaker',
                                    u'relaxed-head-match', u'exact-string-match', u'relaxed-string-match']
 
-        self.gold_chain: list, gold chains, consists of the mention_id
+        self.gold_chain: list, gold chains, consists of the mention_num (instead of mention_id)
             example: [
                      [1,2,5],
                      [3,7],

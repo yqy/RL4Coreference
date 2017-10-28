@@ -26,7 +26,7 @@ def choose_action(action_probability):
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
     predict = [[]]*max_cluster_num
-    for mention_num in cluster_info.keys():
+    for mention_num in len(cluster_info):
         cluster_num = cluster_info[mention_num]
         predict[cluster_num].append(mention_num)
     #print gold_info,predict
@@ -37,7 +37,7 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     action_case = []
     reward = 0.0
 
-    cluster_info = {}
+    cluster_info = []
     new_cluster_num = 0
 
     mentions_num = len(doc_mention_arrays)
@@ -55,7 +55,7 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
             #pair_features = doc_pair_arrays[(j,i)] 
-            pair_features = doc_pair_arrays[j*mentions_num + i] 
+            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i]  #等差数列算出
             this_input = numpy.append(mention_array,mention_in_cluster_array)
             this_input = numpy.append(this_input,pair_features) 
             this_train_case.append(this_input)
@@ -68,16 +68,17 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
         action = choose_action(action_probability)
         action_case.append(action)
 
-        if (action-1) in cluster_info:
-            should_cluster = cluster_info[action-1]
-        else:
+        if (action-1) == -1: # -1 means a new cluster
             should_cluster = new_cluster_num
             new_cluster_num += 1
+        else:
+            should_cluster = cluster_info[action-1]
 
-        cluster_info[i] = should_cluster
-    #print cluster_info
+        cluster_info.append(should_cluster)
+        # cluster_info: save the cluster information for each mention
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
+    return train_case,action_case,reward
     
 def main():
 
@@ -93,9 +94,7 @@ def main():
     # for mention_array: list
     # for mention_pair_array: dict
     train_doc_mention_arrays,train_doc_pair_arrays = DataGenerate.get_arrays(train_docs,"train",w2v)
-    print train_doc_mention_arrays.shape
     test_doc_mention_arrays,test_doc_pair_arrays = DataGenerate.get_arrays(test_docs,"test",w2v)
-    print test_doc_mention_arrays.shape
     dev_doc_mention_arrays,dev_doc_pair_arrays = DataGenerate.get_arrays(dev_docs,"dev",w2v)
 
     train_docs = None
@@ -103,7 +102,7 @@ def main():
     test_docs = None
 
     for i in range(len(train_doc_mention_arrays)):
-        generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i])
+        generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i],train_docs[i].gold_chain)
 
 if __name__ == "__main__":
     main()
