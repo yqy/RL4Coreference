@@ -135,12 +135,12 @@ def get_embedding(mention,w2v,doc):
     mention_length = len(mention.words)
     feature_array += get_binary_by_num(mention_length)
 
-    doc_type = [0]*6
-    doc_dict = {"bn":0,"nw":1,"bc":2,"tc":3,"wb":4,"mz":5}
+    doc_type = [0]*7
+    doc_dict = {"bn":0,"nw":1,"bc":2,"tc":3,"wb":4,"mz":5,"pt":6}
     doc_type[doc_dict[doc.doc_source]]=1
     feature_array += doc_type
 
-    feature_array = numpy.array(feature_array) # dimention = 22
+    feature_array = numpy.array(feature_array) # dimention = 23
 
     return embedding_array,feature_array 
 
