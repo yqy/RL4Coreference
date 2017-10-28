@@ -201,7 +201,10 @@ def get_arrays(docs,typ,w2v):
             
             doc_mention_arrays.append(mention_arrays)
             doc_pair_arrays.append(pair_arrays)
-    
+   
+        doc_mention_arrays = numpy.array(doc_mention_arrays)
+        doc_pair_arrays = numpy.array(doc_pair_arrays)
+
         print >> sys.stderr,"SV mention_array_data to ./model/mention_array_%s."%typ+args.language
         save_f = file('./model/mention_array_%s.'%typ+args.language, 'wb')
         cPickle.dump((doc_mention_arrays,doc_pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)

@@ -106,9 +106,11 @@ class Document():
         ## build mentions
         mention_dict = json_dict["mentions"]
         self.mentions = [None]*len(mention_dict.keys())
+        self.id2num = {}
         for mention_num in mention_dict.keys():
             mention = Mention(mention_dict[mention_num]) 
             self.mentions[mention.mention_num] = mention
+            self.id2num[mention.mention_id] = mention.mention_num
 
         ## build pair feature
         pair_feature_dict = json_dict["pair_features"]
@@ -117,7 +119,8 @@ class Document():
             self.pair_feature[(int(pairs.split(" ")[0]),int(pairs.split(" ")[1]))]=numpy.array(pair_feature_dict[pairs])
 
         ## gold_chain
-        self.gold_chain = gold_chain
+        self.gold_chain = self.get_gold_chain(gold_chain)
+
         self.gold_chain_dict = {}
         for chain in self.gold_chain:
             for mention_item in chain:
@@ -129,6 +132,19 @@ class Document():
                 if self.gold_chain_dict[ment1.mention_id] == self.gold_chain_dict[ment2.mention_id]:
                     return True
         return False
+    def get_gold_chain(self,gold_chain):
+        # generate gold chain by using mention_num instead of using mention_id
+        rl = []
+
+        for chain in gold_chain:
+            this_chain = []
+            for mention_id in chain:
+                if mention_id in self.id2num:
+                    this_chain.append(self.id2num[mention_id])
+                else:
+                    this_chain.append(-1)
+            rl.append(this_chain)
+        return rl
 
 def main():
 
