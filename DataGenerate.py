@@ -143,7 +143,7 @@ def get_embedding(mention,w2v,doc):
     feature_array = numpy.array(feature_array) # dimention = 23
 
     #return embedding_array,feature_array 
-    return numpy.numpy.append(embedding_array,feature_array)
+    return numpy.append(embedding_array,feature_array)
 
 def get_pair_embedding(i,j,doc):
     feature_array = []
