@@ -29,7 +29,7 @@ def get_reward(cluster_info,gold_info,max_cluster_num):
     for mention_num in cluster_info.keys():
         cluster_num = cluster_info[mention_num]
         predict[cluster_num].append(mention_num)
-    print gold_info,predict
+    #print gold_info,predict
     return 0
 
 def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
@@ -72,7 +72,7 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
             new_cluster_num += 1
 
         cluster_info[i] = should_cluster
-    print cluster_info
+    #print cluster_info
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
     
@@ -90,7 +90,9 @@ def main():
     # for mention_array: list
     # for mention_pair_array: dict
     train_doc_mention_arrays,train_doc_pair_arrays = DataGenerate.get_arrays(train_docs,"train",w2v)
+    print train_doc_mention_arrays.shape
     test_doc_mention_arrays,test_doc_pair_arrays = DataGenerate.get_arrays(test_docs,"test",w2v)
+    print test_doc_mention_arrays.shape
     dev_doc_mention_arrays,dev_doc_pair_arrays = DataGenerate.get_arrays(dev_docs,"dev",w2v)
 
     train_docs = None
@@ -98,7 +100,6 @@ def main():
     test_docs = None
 
     for i in range(len(train_doc_mention_arrays)):
-        print "hehe"
         generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i])
 
 if __name__ == "__main__":
