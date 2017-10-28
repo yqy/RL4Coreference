@@ -199,9 +199,9 @@ def get_arrays(docs,typ,w2v):
             mentions_nums = len(doc.mentions)
             for i in range(len(doc.mentions)):
                 for j in range(i+1,len(doc.mentions)):
-                    #pair_feature = get_pair_embedding(i,j,doc)
+                    pair_feature = get_pair_embedding(i,j,doc)
                     pair_arrays.append(pair_feature) # i,j : pair_arrays[i*mentions_nums+j] = pair_feature
-                    pair_arrays[(i,j)] = pair_feature
+                    #pair_arrays[(i,j)] = pair_feature
             
             doc_mention_arrays.append(numpy.array(mention_arrays))
             doc_pair_arrays.append(numpy.array(pair_arrays))
