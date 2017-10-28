@@ -142,7 +142,8 @@ def get_embedding(mention,w2v,doc):
 
     feature_array = numpy.array(feature_array) # dimention = 23
 
-    return embedding_array,feature_array 
+    #return embedding_array,feature_array 
+    return numpy.numpy.append(embedding_array,feature_array)
 
 def get_pair_embedding(i,j,doc):
     feature_array = []
@@ -190,8 +191,8 @@ def get_arrays(docs,typ,w2v):
     
             ## feature and embedding for each Mention
             for mention in doc.mentions:
-                this_mention_embedding,this_mention_feature = get_embedding(mention,w2v,doc)
-                mention_arrays.append((this_mention_embedding,this_mention_feature))
+                this_mention_embedding = get_embedding(mention,w2v,doc)
+                mention_arrays.append(this_mention_embedding)
     
             ## features for each pair
             for i in range(len(doc.mentions)):
