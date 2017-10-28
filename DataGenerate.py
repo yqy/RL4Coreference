@@ -177,11 +177,12 @@ def get_arrays(docs,typ,w2v):
     if os.path.isfile("./model/mention_array_%s."%typ+args.language):
         print >> sys.stderr,"Read data from ./model/mention_array_%s."%typ+args.language
         read_f = file("./model/mention_array_%s."%typ+args.language, 'rb')
-        doc_mention_arrays,doc_pair_arrays = cPickle.load(read_f)
+        doc_mention_arrays,doc_pair_arrays,doc_gold_chains = cPickle.load(read_f)
     else:
         print >> sys.stderr,"Generate %s arrays for %s"%(typ,args.language)
         doc_mention_arrays = []
         doc_pair_arrays = []
+        doc_gold_chains = []
         
         start_time = timeit.default_timer()
     
@@ -189,6 +190,8 @@ def get_arrays(docs,typ,w2v):
             mention_arrays = []
             pair_arrays = []
             #pair_arrays = {}
+
+            doc_gold_chains.append(doc.gold_chain)
     
             ## feature and embedding for each Mention
             for mention in doc.mentions:
@@ -211,12 +214,12 @@ def get_arrays(docs,typ,w2v):
 
         print >> sys.stderr,"SV mention_array_data to ./model/mention_array_%s."%typ+args.language
         save_f = file('./model/mention_array_%s.'%typ+args.language, 'wb')
-        cPickle.dump((doc_mention_arrays,doc_pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump((doc_mention_arrays,doc_pair_arrays,doc_gold_chains), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
-    return doc_mention_arrays,doc_pair_arrays
+    return doc_mention_arrays,doc_pair_arrays,doc_gold_chains
 
 
 def main():
@@ -230,9 +233,9 @@ def main():
 
     train_docs,dev_docs,test_docs = get_doc_data()
 
-    train_doc_mention_arrays,train_doc_pair_arrays = get_arrays(train_docs,"train",w2v)
-    test_doc_mention_arrays,test_doc_pair_arrays = get_arrays(test_docs,"test",w2v)
-    dev_doc_mention_arrays,dev_doc_pair_arrays = get_arrays(dev_docs,"dev",w2v)
+    train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = get_arrays(train_docs,"train",w2v)
+    test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = get_arrays(test_docs,"test",w2v)
+    dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = get_arrays(dev_docs,"dev",w2v)
 
 if __name__ == "__main__":
     main()

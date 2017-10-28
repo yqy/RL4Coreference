@@ -92,17 +92,17 @@ def main():
     train_docs,dev_docs,test_docs = DataGenerate.get_doc_data()
 
     # for mention_array: list
-    # for mention_pair_array: dict
-    train_doc_mention_arrays,train_doc_pair_arrays = DataGenerate.get_arrays(train_docs,"train",w2v)
-    test_doc_mention_arrays,test_doc_pair_arrays = DataGenerate.get_arrays(test_docs,"test",w2v)
-    dev_doc_mention_arrays,dev_doc_pair_arrays = DataGenerate.get_arrays(dev_docs,"dev",w2v)
+    # for mention_pair_array: list
+    train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = get_arrays(train_docs,"train",w2v)
+    test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = get_arrays(test_docs,"test",w2v)
+    dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = get_arrays(dev_docs,"dev",w2v)
 
     train_docs = None
     dev_docs = None
     test_docs = None
 
     for i in range(len(train_doc_mention_arrays)):
-        generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i],train_docs[i].gold_chain)
+        generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i],train_doc_gold_chains[i])
 
 if __name__ == "__main__":
     main()
