@@ -187,7 +187,8 @@ def get_arrays(docs,typ,w2v):
     
         for doc in docs:
             mention_arrays = []
-            pair_arrays = {}
+            pair_arrays = []
+            #pair_arrays = {}
     
             ## feature and embedding for each Mention
             for mention in doc.mentions:
@@ -195,13 +196,15 @@ def get_arrays(docs,typ,w2v):
                 mention_arrays.append(this_mention_embedding)
     
             ## features for each pair
+            mentions_nums = len(doc.mentions)
             for i in range(len(doc.mentions)):
                 for j in range(i+1,len(doc.mentions)):
-                    pair_feature = get_pair_embedding(i,j,doc)
+                    #pair_feature = get_pair_embedding(i,j,doc)
+                    pair_arrays.append(pair_feature) # i,j : pair_arrays[i*mentions_nums+j] = pair_feature
                     pair_arrays[(i,j)] = pair_feature
             
-            doc_mention_arrays.append(mention_arrays)
-            doc_pair_arrays.append(pair_arrays)
+            doc_mention_arrays.append(numpy.array(mention_arrays))
+            doc_pair_arrays.append(numpy.array(pair_arrays))
    
         doc_mention_arrays = numpy.array(doc_mention_arrays)
         doc_pair_arrays = numpy.array(doc_pair_arrays)
@@ -210,6 +213,7 @@ def get_arrays(docs,typ,w2v):
         save_f = file('./model/mention_array_%s.'%typ+args.language, 'wb')
         cPickle.dump((doc_mention_arrays,doc_pair_arrays), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
+
         end_time = timeit.default_timer()
         print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
     return doc_mention_arrays,doc_pair_arrays

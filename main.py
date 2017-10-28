@@ -40,6 +40,8 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     cluster_info = {}
     new_cluster_num = 0
 
+    mentions_num = len(doc_mention_arrays)
+
     for i in range(len(doc_mention_arrays)):
         mention_array = doc_mention_arrays[i]
         this_train_case = []
@@ -52,7 +54,8 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
-            pair_features = doc_pair_arrays[(j,i)] 
+            #pair_features = doc_pair_arrays[(j,i)] 
+            pair_features = doc_pair_arrays[j*mentions_num + i] 
             this_input = numpy.append(mention_array,mention_in_cluster_array)
             this_input = numpy.append(this_input,pair_features) 
             this_train_case.append(this_input)
