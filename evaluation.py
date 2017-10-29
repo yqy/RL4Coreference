@@ -74,16 +74,16 @@ def b_cubed(clusters, mention_to_gold):
 
     for c in clusters:
 
+        if len(c) == 1: continue
+
         gold_counts = Counter()
         correct = 0
         for m in c:
             if m in mention_to_gold:
-                #qq = mention_to_gold[m]
-                qq = tuple(mention_to_gold[m])
-                gold_counts[qq] += 1
+                gold_counts[tuple(mention_to_gold[m])] += 1
 
         for c2, count in gold_counts.iteritems():
-            #if len(c2) != 1:
+            if len(c2) == 1: continue
             correct += count * count
         
         num += correct / float(len(c))
@@ -113,8 +113,8 @@ def phi4(c1, c2):
 
 
 def ceafe(clusters, gold_clusters):
-    #clusters = [c for c in clusters if len(c) != 1]
-    clusters = [c for c in clusters]
+    clusters = [c for c in clusters if len(c) != 1]
+    #clusters = [c for c in clusters]
     scores = np.zeros((len(gold_clusters), len(clusters)))
     for i in range(len(gold_clusters)):
         for j in range(len(clusters)):

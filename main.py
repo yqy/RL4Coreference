@@ -34,12 +34,9 @@ def get_reward(cluster_info,gold_info,max_cluster_num):
         predict[cluster_num].append(mention_num)
 
     ev_document = evaluation.EvaluationDocument(gold_info,predict)
-    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.muc)
-    print gold_info
-    print predict
+    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
     print p,r,f
-    #print gold_info,predict
-    return 0
+    return f
 
 def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     train_case = []
@@ -102,23 +99,20 @@ def main():
         embedding_dimention = 64
     w2v = word2vec.Word2Vec(embedding_dir,embedding_dimention)
 
-    train_docs,dev_docs,test_docs = DataGenerate.get_doc_data()
+    train_docs = DataGenerate.doc_data_generater("train")
+    dev_docs = DataGenerate.doc_data_generater("dev")
+    test_docs = DataGenerate.doc_data_generater("test")
+
 
     # for mention_array: list
     # for mention_pair_array: list
-    
-    for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.get_arrays(train_docs,"train",w2v):
+
+    for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
         generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain)
-    #train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = DataGenerate.get_arrays(train_docs,"train",w2v)
-    #test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = DataGenerate.get_arrays(test_docs,"test",w2v)
-    #dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = DataGenerate.get_arrays(dev_docs,"dev",w2v)
-
-    dev_docs = None
-    test_docs = None
-    train_docs = None
-
-    #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in generate_cases(train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains):
-        #generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain)
+    for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+        generate_policy_case(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain)
+    for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
+        generate_policy_case(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain)
 
 if __name__ == "__main__":
     main()

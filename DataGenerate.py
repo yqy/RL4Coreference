@@ -10,50 +10,107 @@ import timeit
 from conf import *
 
 import Mention
-import Reader
+#import Reader
 import word2vec
 
 import cPickle
 sys.setrecursionlimit(1000000)
 
-def get_doc_data():
+ENDTAG="EOF!!!EOF"
 
-    print >> sys.stderr,"Read and Generate TRAINING data ..."
-    if os.path.isfile("./model/train_docs."+args.language):
-        print >> sys.stderr,"Read train data from ./model/train_docs."+args.language
-        read_f = file('./model/train_docs.'+args.language, 'rb')
-        train_docs = cPickle.load(read_f)
-    else:
-        train_docs = Reader.read_from_file(args.train_data,args.train_gold,args.language)
-        print >> sys.stderr,"save model ..."
-        save_f = file('./model/train_docs.'+args.language, 'wb')
-        cPickle.dump(train_docs, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-        save_f.close()
+def read_from_file(fil,goldf,language):
+    line_num = len(open(goldf).readlines())
+    print >> sys.stderr, "Read from %s and %s documents"%(fil,goldf)
 
-    print >> sys.stderr,"Read and Generate DEV data ..."
-    if os.path.isfile("./model/dev_docs."+args.language):
-        print >> sys.stderr,"Read dev data from ./model/dev_docs."+args.language
-        read_f = file('./model/dev_docs.'+args.language, 'rb')
-        dev_docs = cPickle.load(read_f)
-    else:
-        dev_docs = Reader.read_from_file(args.dev_data,args.dev_gold,args.language)
-        print >> sys.stderr,"save model ..."
-        save_f = file('./model/dev_docs.'+args.language, 'wb')
-        cPickle.dump(dev_docs, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-        save_f.close()
+    f = open(fil)
+    gold_file = open(goldf)
 
-    print >> sys.stderr,"Read and Generate TEST data ..."
-    if os.path.isfile("./model/test_docs."+args.language):
-        print >> sys.stderr,"Read test data from ./model/test_docs."+args.language
-        read_f = file('./model/test_docs.'+args.language, 'rb')
-        test_docs = cPickle.load(read_f)
-    else:
-        test_docs = Reader.read_from_file(args.test_data,args.test_gold,args.language)
-        print >> sys.stderr,"save model ..."
-        save_f = file('./model/test_docs.'+args.language, 'wb')
-        cPickle.dump(test_docs, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-        save_f.close()
-    return train_docs,dev_docs,test_docs
+    total_start_time = timeit.default_timer()
+    i = 0
+    while True:
+        line = f.readline()
+        if not line:break
+        i += 1
+
+        if i >= 5:
+            break 
+
+        start_time = timeit.default_timer()
+        line = line.strip()
+        s = json.loads(line)
+        line = gold_file.readline()
+        js = json.loads(line)
+        gold_chain = js[js.keys()[0]]
+
+        document = Mention.Document(s,gold_chain,language)
+        yield document
+
+        end_time = timeit.default_timer()
+        print >> sys.stderr, "Done %d/%d document - %.3f seconds"%(i,line_num,end_time-start_time)
+
+    total_end_time = timeit.default_timer()
+    print >> sys.stderr, "Total use %.3f seconds"%(total_end_time-total_start_time)
+
+def doc_data_generater(doc_type):
+
+    if doc_type == "train":
+        print >> sys.stderr,"Read and Generate TRAINING data ..."
+        if os.path.isfile("./model/train_docs."+args.language):
+            print >> sys.stderr,"Read train data from ./model/train_docs."+args.language
+            read_f = file('./model/train_docs.'+args.language, 'rb')
+            while True:
+                train_doc = cPickle.load(read_f)
+                if train_doc == ENDTAG:
+                    break
+                yield train_doc
+        else:
+            train_docs = read_from_file(args.train_data,args.train_gold,args.language)
+            print >> sys.stderr,"save model ..."
+            save_f = file('./model/train_docs.'+args.language, 'wb')
+            for train_doc in train_docs:
+                cPickle.dump(train_doc, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+                yield train_doc
+            cPickle.dump(ENDTAG, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+            save_f.close()
+
+    elif doc_type == "dev":
+        print >> sys.stderr,"Read and Generate DEV data ..."
+        if os.path.isfile("./model/dev_docs."+args.language):
+            print >> sys.stderr,"Read dev data from ./model/dev_docs."+args.language
+            read_f = file('./model/dev_docs.'+args.language, 'rb')
+            while True:
+                dev_doc = cPickle.load(read_f)
+                if dev_doc == ENDTAG:
+                    break
+                yield dev_doc
+        else:
+            dev_docs = read_from_file(args.dev_data,args.dev_gold,args.language)
+            print >> sys.stderr,"save model ..."
+            save_f = file('./model/dev_docs.'+args.language, 'wb')
+            for dev_doc in dev_docs: 
+                cPickle.dump(dev_doc, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+                yield dev_doc
+            cPickle.dump(ENDTAG, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+            save_f.close()
+    elif doc_type == "test":
+        print >> sys.stderr,"Read and Generate TEST data ..."
+        if os.path.isfile("./model/test_docs."+args.language):
+            print >> sys.stderr,"Read test data from ./model/test_docs."+args.language
+            read_f = file('./model/test_docs.'+args.language, 'rb')
+            while True:
+                test_doc = cPickle.load(read_f)
+                if test_doc == ENDTAG:
+                    break
+                yield test_doc
+        else:
+            test_docs = read_from_file(args.test_data,args.test_gold,args.language)
+            print >> sys.stderr,"save model ..."
+            save_f = file('./model/test_docs.'+args.language, 'wb')
+            for test_doc in test_docs:
+                cPickle.dump(test_doc, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+                yield test_doc
+            cPickle.dump(ENDTAG, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+            save_f.close()
 
 def get_binary_by_num(length):
     # return binary list that convernt length into 0,1,0,0,0 vectors
@@ -172,26 +229,28 @@ def get_pair_embedding(i,j,doc):
     feature_array = numpy.array(feature_array) # dimention=28
     return feature_array
 
-def get_arrays(docs,typ,w2v):
+def array_generater(docs,typ,w2v):
 
     if os.path.isfile("./model/mention_array_%s."%typ+args.language):
         print >> sys.stderr,"Read data from ./model/mention_array_%s."%typ+args.language
         read_f = file("./model/mention_array_%s."%typ+args.language, 'rb')
-        doc_mention_arrays,doc_pair_arrays,doc_gold_chains = cPickle.load(read_f)
+        while True:
+            doc_mention_array,doc_pair_array,doc_gold_chain = cPickle.load(read_f)
+            if doc_mention_array == ENDTAG:
+                break
+            yield doc_mention_array,doc_pair_array,doc_gold_chain
     else:
         print >> sys.stderr,"Generate %s arrays for %s"%(typ,args.language)
-        doc_mention_arrays = []
-        doc_pair_arrays = []
-        doc_gold_chains = []
-        
+
         start_time = timeit.default_timer()
+
+        print >> sys.stderr,"SV mention_array_data to ./model/mention_array_%s."%typ+args.language
+        save_f = file('./model/mention_array_%s.'%typ+args.language, 'wb')
     
         for doc in docs:
             mention_arrays = []
             pair_arrays = []
-            #pair_arrays = {}
 
-            doc_gold_chains.append(doc.gold_chain)
     
             ## feature and embedding for each Mention
             for mention in doc.mentions:
@@ -205,22 +264,23 @@ def get_arrays(docs,typ,w2v):
                     pair_feature = get_pair_embedding(i,j,doc)
                     pair_arrays.append(pair_feature) # i,j : pair_arrays[i*mentions_nums+j] = pair_feature
                     #pair_arrays[(i,j)] = pair_feature
-            
-            doc_mention_arrays.append(numpy.array(mention_arrays))
-            doc_pair_arrays.append(numpy.array(pair_arrays))
-   
-        doc_mention_arrays = numpy.array(doc_mention_arrays)
-        doc_pair_arrays = numpy.array(doc_pair_arrays)
 
-        print >> sys.stderr,"SV mention_array_data to ./model/mention_array_%s."%typ+args.language
-        save_f = file('./model/mention_array_%s.'%typ+args.language, 'wb')
-        cPickle.dump((doc_mention_arrays,doc_pair_arrays,doc_gold_chains), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+            #doc_mention_arrays.append(numpy.array(mention_arrays))
+            #doc_pair_arrays.append(numpy.array(pair_arrays))
+            #doc_gold_chains.append(doc.gold_chain)
+
+            cPickle.dump((mention_arrays,pair_arrays,doc.gold_chain), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+
+            yield numpy.array(mention_arrays),numpy.array(pair_arrays),doc.gold_chain
+   
+        #doc_mention_arrays = numpy.array(doc_mention_arrays)
+        #doc_pair_arrays = numpy.array(doc_pair_arrays)
+
+        cPickle.dump((ENDTAG,None,None), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
 
-        end_time = timeit.default_timer()
-        print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
-    for i in range(len(doc_gold_chains)):
-        yield (doc_mention_arrays[i],doc_pair_arrays[i],doc_gold_chains[i])
+        #end_time = timeit.default_timer()
+        #print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
     #return doc_mention_arrays,doc_pair_arrays,doc_gold_chains
 
 
@@ -233,11 +293,14 @@ def main():
         embedding_dimention = 64
     w2v = word2vec.Word2Vec(embedding_dir,embedding_dimention)
 
-    train_docs,dev_docs,test_docs = get_doc_data()
+    #train_docs,dev_docs,test_docs = get_doc_data()
+    train_docs = doc_data_generater("train")
+    dev_docs = doc_data_generater("dev")
+    test_docs = doc_data_generater("test")
 
-    train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = get_arrays(train_docs,"train",w2v)
-    test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = get_arrays(test_docs,"test",w2v)
-    dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = get_arrays(dev_docs,"dev",w2v)
+    train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = array_generater(train_docs,"train",w2v)
+    test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = array_generater(test_docs,"test",w2v)
+    dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = array_generater(dev_docs,"dev",w2v)
 
 if __name__ == "__main__":
     main()

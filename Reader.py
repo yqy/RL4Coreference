@@ -32,11 +32,12 @@ def read_from_file(fil,goldf,language):
         gold_chain = js[js.keys()[0]]
 
         document = Mention.Document(s,gold_chain,language)
-        total_docs.append(document)
+        #total_docs.append(document)
+        yield document
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "Done %d/%d document - %.3f seconds"%(i,line_num,end_time-start_time)
 
     total_end_time = timeit.default_timer()
     print >> sys.stderr, "Total use %.3f seconds"%(total_end_time-total_start_time)
-    return total_docs
+    #return total_docs
