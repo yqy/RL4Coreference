@@ -26,7 +26,9 @@ def choose_action(action_probability):
     return 0
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
-    predict = [[]]*max_cluster_num
+    predict = []
+    for i in range(max_cluster_num):
+        predict.append([])
     for mention_num in range(len(cluster_info)):
         cluster_num = cluster_info[mention_num]
         predict[cluster_num].append(mention_num)
