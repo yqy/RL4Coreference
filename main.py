@@ -79,7 +79,11 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
     return train_case,action_case,reward
-    
+
+def generate_cases(mention_a,pair_a,gold_chain):
+    for i in range(len(mention_a)):
+        yield (mention_a[i],pair_a[i],gold_chain[i])
+
 def main():
 
     embedding_dir = args.embedding+args.language
@@ -93,16 +97,19 @@ def main():
 
     # for mention_array: list
     # for mention_pair_array: list
-    train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = DataGenerate.get_arrays(train_docs,"train",w2v)
-    test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = DataGenerate.get_arrays(test_docs,"test",w2v)
-    dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = DataGenerate.get_arrays(dev_docs,"dev",w2v)
+    
+    for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.get_arrays(train_docs,"train",w2v):
+        generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain)
+    #train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = DataGenerate.get_arrays(train_docs,"train",w2v)
+    #test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = DataGenerate.get_arrays(test_docs,"test",w2v)
+    #dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = DataGenerate.get_arrays(dev_docs,"dev",w2v)
 
     dev_docs = None
     test_docs = None
     train_docs = None
 
-    for i in range(len(train_doc_mention_arrays)):
-        generate_policy_case(train_doc_mention_arrays[i],train_doc_pair_arrays[i],train_doc_gold_chains[i])
+    #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in generate_cases(train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains):
+        #generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain)
 
 if __name__ == "__main__":
     main()

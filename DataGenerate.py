@@ -219,7 +219,9 @@ def get_arrays(docs,typ,w2v):
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
-    return doc_mention_arrays,doc_pair_arrays,doc_gold_chains
+    for i in range(len(doc_gold_chains)):
+        yield (doc_mention_arrays[i],doc_pair_arrays[i],doc_gold_chains[i])
+    #return doc_mention_arrays,doc_pair_arrays,doc_gold_chains
 
 
 def main():
