@@ -13,6 +13,7 @@ import Mention
 import Reader
 import word2vec
 import DataGenerate
+import evaluation
 
 import cPickle
 sys.setrecursionlimit(1000000)
@@ -26,9 +27,13 @@ def choose_action(action_probability):
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
     predict = [[]]*max_cluster_num
-    for mention_num in len(cluster_info):
+    for mention_num in len(len(cluster_info)):
         cluster_num = cluster_info[mention_num]
         predict[cluster_num].append(mention_num)
+
+    ev_document = evaluation.EvaluationDocument(gold_info,predict)
+    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.muc)
+    print p,r,f
     #print gold_info,predict
     return 0
 
