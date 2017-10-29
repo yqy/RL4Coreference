@@ -55,7 +55,7 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
             #pair_features = doc_pair_arrays[(j,i)] 
-            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i]  #等差数列算出
+            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j]  #等差数列算出
             this_input = numpy.append(mention_array,mention_in_cluster_array)
             this_input = numpy.append(this_input,pair_features) 
             this_train_case.append(this_input)
@@ -93,9 +93,9 @@ def main():
 
     # for mention_array: list
     # for mention_pair_array: list
-    train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = get_arrays(train_docs,"train",w2v)
-    test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = get_arrays(test_docs,"test",w2v)
-    dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = get_arrays(dev_docs,"dev",w2v)
+    train_doc_mention_arrays,train_doc_pair_arrays,train_doc_gold_chains = DataGenerate.get_arrays(train_docs,"train",w2v)
+    test_doc_mention_arrays,test_doc_pair_arrays,test_doc_gold_chains = DataGenerate.get_arrays(test_docs,"test",w2v)
+    dev_doc_mention_arrays,dev_doc_pair_arrays,dev_doc_gold_chains = DataGenerate.get_arrays(dev_docs,"dev",w2v)
 
     dev_docs = None
     test_docs = None
