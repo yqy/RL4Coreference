@@ -55,7 +55,7 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
             #pair_features = doc_pair_arrays[(j,i)] 
-            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j]  #等差数列算出
+            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j -1]  #等差数列算出
             this_input = numpy.append(mention_array,mention_in_cluster_array)
             this_input = numpy.append(this_input,pair_features) 
             this_train_case.append(this_input)
