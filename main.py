@@ -33,6 +33,8 @@ def get_reward(cluster_info,gold_info,max_cluster_num):
 
     ev_document = evaluation.EvaluationDocument(gold_info,predict)
     p,r,f = evaluation.evaluate_documents([ev_document],evaluation.muc)
+    print gold_info
+    print predict
     print p,r,f
     #print gold_info,predict
     return 0
