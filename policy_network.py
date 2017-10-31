@@ -27,6 +27,12 @@ def sample_action(action_probability):
     return action
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
+    ev_document = get_evaluation_document(cluster_info,gold_info,max_cluster_num)
+    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
+    print >> sys.stderr, p,r,f
+    return f
+
+def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     predict = []
     for i in range(max_cluster_num):
         predict.append([])
@@ -35,9 +41,27 @@ def get_reward(cluster_info,gold_info,max_cluster_num):
         predict[cluster_num].append(mention_num)
 
     ev_document = evaluation.EvaluationDocument(gold_info,predict)
-    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
-    print p,r,f
-    return f
+    return ev_document
+
+
+def batch_generate(train_case):
+    train_list = []
+    mask_list = []
+
+    max_length = len(list(train_case[-1]))
+
+    for i in range(len(train_case)):
+        this_train_cas = list(train_case[i])
+        add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
+        train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+        mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
+        mask_list.append(mask_in_batch)
+        train_list.append(train_case_in_batch)
+
+    train_list = numpy.array(train_list)
+    mask_list = numpy.array(mask_list)
+
+    return train_list,mask_list
 
 def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     train_case = []
@@ -70,11 +94,12 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
         this_train_case = numpy.array(this_train_case)
 
-        
-        action_probability = list(network.predict(this_train_case))[0]
-
         train_case.append(this_train_case)
 
+    train_list,mask_list = batch_generate(train_case) 
+
+    action_probabilities = list(network.predict_batch(train_list,mask_list)[0])
+    for action_probability in action_probabilities:
         action = sample_action(action_probability)
         action_case.append(action)
 
@@ -88,8 +113,61 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
         # cluster_info: save the cluster information for each mention
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
+    reward_list = [reward]*mentions_num
 
-    return train_case,action_case,reward
+    return train_list,mask_list,action_case,reward_list
+
+def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+    train_case = []
+    action_case = []
+
+    cluster_info = []
+    new_cluster_num = 0
+
+    mentions_num = len(doc_mention_arrays)
+
+    for i in range(mentions_num):
+        mention_array = doc_mention_arrays[i]
+        this_train_case = []
+
+        ## add a Noun cluster
+        Noun_cluster_array = numpy.array([0.0]*len(mention_array))
+        this_input = numpy.append(mention_array,Noun_cluster_array)
+        this_input = numpy.append(this_input,numpy.array([0.0]*28))
+        this_train_case.append(this_input)
+
+        for j in range(0,i):
+            mention_in_cluster_array = doc_mention_arrays[j]
+            #pair_features = doc_pair_arrays[(j,i)] 
+            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j -1]  #等差数列算出
+            this_input = numpy.append(mention_array,mention_in_cluster_array)
+            this_input = numpy.append(this_input,pair_features) 
+            this_train_case.append(this_input)
+
+
+        this_train_case = numpy.array(this_train_case)
+
+        train_case.append(this_train_case)
+
+    train_list,mask_list = batch_generate(train_case) 
+
+    action_probabilities = list(network.predict_batch(train_list,mask_list)[0])
+    for action_probability in action_probabilities:
+        action = sample_action(action_probability)
+        action_case.append(action)
+
+        if (action-1) == -1: # -1 means a new cluster
+            should_cluster = new_cluster_num
+            new_cluster_num += 1
+        else:
+            should_cluster = cluster_info[action-1]
+
+        cluster_info.append(should_cluster)
+
+    ev_document = get_evaluation_document(cluster_info,gold_chain,new_cluster_num)
+
+    return ev_document
+
 
 def main():
 

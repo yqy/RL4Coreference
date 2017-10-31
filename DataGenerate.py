@@ -235,10 +235,14 @@ def array_generater(docs,typ,w2v):
         print >> sys.stderr,"Read data from ./model/mention_array_%s."%typ+args.language
         read_f = file("./model/mention_array_%s."%typ+args.language, 'rb')
         while True:
+            start_time = timeit.default_timer()
             doc_mention_array,doc_pair_array,doc_gold_chain = cPickle.load(read_f)
             if doc_mention_array == ENDTAG:
                 break
             yield doc_mention_array,doc_pair_array,doc_gold_chain
+            end_time = timeit.default_timer()
+            print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
+
     else:
         print >> sys.stderr,"Generate %s arrays for %s"%(typ,args.language)
 

@@ -25,35 +25,6 @@ print >> sys.stderr, os.getpid()
 
 random.seed(args.random_seed)
 
-def batch_generate(train_case,action_case,reward):
-    reward_list = []
-    train_list = []
-    action_list = []
-    mask_list = []
-
-    max_length = len(list(train_case[:-1]))
-
-    for i in range(len(train_case)):
-        this_train_cas = list(train_case[i])
-        add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
-        train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
-        mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
-        
-        mask_list.append(mask_in_batch)
-        train_list.append(train_case_in_batch)
-        action_list.append(action_case[i])
-        reward_list.append(reward)
-
-    reward_list = numpy.array(reward_list)
-    train_list = numpy.array(train_list)
-    action_list = numpy.array(action_list)
-    mask_list = numpy.array(mask_list)
-
-    print train_list
-    print train_list.shape
-
-    return train_list,mask_list,action_list,reward_list
-
 def main():
 
     embedding_dir = args.embedding+args.language
@@ -84,21 +55,38 @@ def main():
 
     # for mention_array: list
     # for mention_pair_array: list
+    
+    for echo in range(20):
+        print "ECHO:",echo
+        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
+            network_model.train_step(train_list,mask_list,action_case,reward_list,0.01)
+    
+        dev_docs = []
+        for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+            ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+            dev_docs.append(ev_doc)
+        print "DEV"
+        mp,mr,mf = evaluation.evaluate_documents(dev_docs,evaluation.muc)
+        print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
+        bp,br,bf = evaluation.evaluate_documents(dev_docs,evaluation.b_cubed)
+        print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
+        cp,cr,cf = evaluation.evaluate_documents(dev_docs,evaluation.ceafe)
+        print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+    
+        test_docs = []
+        for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
+            ev_doc = policy_network.generate_policy_test(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain,network_model)
+            test_docs.append(ev_doc)
+        print "TEST"
+        mp,mr,mf = evaluation.evaluate_documents(test_docs,evaluation.muc)
+        print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
+        bp,br,bf = evaluation.evaluate_documents(test_docs,evaluation.b_cubed)
+        print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
+        cp,cr,cf = evaluation.evaluate_documents(test_docs,evaluation.ceafe)
+        print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
 
-    for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-        train_case,action_case,reward = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
-        train_list,mask_list,action_list,reward_list = batch_generate(train_case,action_case,reward)
 
-        network_model.train_step(train_list,mask_list,action_list,reward_list,0.5)
-
-    for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-        policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
-
-
-#    for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
-#        policy_network.generate_policy_case(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain)
-#    for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
-#        policy_network.generate_policy_case(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain)
 
 if __name__ == "__main__":
     main()
