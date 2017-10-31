@@ -64,6 +64,8 @@ def batch_generate(train_case, max_batch_size = 256):
         train_batch_list = []
         mask_batch_list = []
 
+        if len(this_train_batch) <= 1:
+            continue
         max_length = len(list(this_train_batch[-1]))
 
         for i in range(len(this_train_batch)):
