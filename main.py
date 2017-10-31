@@ -64,7 +64,7 @@ def main():
     
         dev_docs = []
         for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
-            ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+            ev_doc,train_l,ml = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
             dev_docs.append(ev_doc)
         print "DEV"
         mp,mr,mf = evaluation.evaluate_documents(dev_docs,evaluation.muc)
@@ -76,7 +76,7 @@ def main():
     
         test_docs = []
         for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
-            ev_doc = policy_network.generate_policy_test(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain,network_model)
+            ev_doc,train_l,ml = policy_network.generate_policy_test(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain,network_model)
             test_docs.append(ev_doc)
         print "TEST"
         mp,mr,mf = evaluation.evaluate_documents(test_docs,evaluation.muc)
