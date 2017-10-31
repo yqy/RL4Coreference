@@ -117,6 +117,34 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     return train_list,mask_list,action_case,reward_list
 
+def generate_policy_case_with_train_mask(train_list,mask_list,gold_chain=[],network=None):
+    action_case = []
+    reward = 0.0
+
+    cluster_info = []
+    new_cluster_num = 0
+
+    mentions_num = len(train_list)
+
+    action_probabilities = list(network.predict_batch(train_list,mask_list)[0])
+    for action_probability in action_probabilities:
+        action = sample_action(action_probability)
+        action_case.append(action)
+
+        if (action-1) == -1: # -1 means a new cluster
+            should_cluster = new_cluster_num
+            new_cluster_num += 1
+        else:
+            should_cluster = cluster_info[action-1]
+
+        cluster_info.append(should_cluster)
+        # cluster_info: save the cluster information for each mention
+
+    reward = get_reward(cluster_info,gold_chain,new_cluster_num)
+    reward_list = [reward]*mentions_num
+
+    return action_case,reward_list
+
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     train_case = []
     action_case = []
@@ -150,6 +178,31 @@ def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
         train_case.append(this_train_case)
 
     train_list,mask_list = batch_generate(train_case) 
+
+    action_probabilities = list(network.predict_batch(train_list,mask_list)[0])
+    for action_probability in action_probabilities:
+        action = sample_action(action_probability)
+        action_case.append(action)
+
+        if (action-1) == -1: # -1 means a new cluster
+            should_cluster = new_cluster_num
+            new_cluster_num += 1
+        else:
+            should_cluster = cluster_info[action-1]
+
+        cluster_info.append(should_cluster)
+
+    ev_document = get_evaluation_document(cluster_info,gold_chain,new_cluster_num)
+
+    return ev_document,train_list,mask_list
+
+def generate_policy_test_with_train_mask(train_list,mask_list,gold_chain=[],network=None):
+
+    action_case = []
+    cluster_info = []
+    new_cluster_num = 0
+
+    mentions_num = len(train_list)
 
     action_probabilities = list(network.predict_batch(train_list,mask_list)[0])
     for action_probability in action_probabilities:
