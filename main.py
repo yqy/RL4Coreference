@@ -60,7 +60,12 @@ def main():
         print "ECHO:",echo
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
             train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
-            network_model.train_step(train_list,mask_list,action_case,reward_list,0.01)
+            for batch_num in len(train_list):
+                train_batch = train_list[i]
+                mask_batch = mask_list[i]
+                action_batch = action_case[i]
+                reward_batch = reward_list[i]
+            network_model.train_step(train_batch,mask_batch,action_batch,reward_batch,0.01)
     
         dev_docs = []
         for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
