@@ -26,9 +26,8 @@ def sample_action(action_probability):
     action = numpy.random.choice(numpy.arange(len(action_probability)),p=action_probability)
     return action
 def choose_action(action_probability):
-    action = action_probability.index(max(action_probability))
+    action = action_probability.index(max(list(action_probability)))
     return action
-
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
     ev_document = get_evaluation_document(cluster_info,gold_info,max_cluster_num)
@@ -48,11 +47,8 @@ def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     return ev_document
 
 
-def batch_generate(train_case, max_batch_size = 64):
+def batch_generater(train_case, max_batch_size = 64):
 
-    train_list = []
-    mask_list = []
-    
     total_num = len(train_case)
     batch_num = (total_num/max_batch_size)+1
 
@@ -77,21 +73,11 @@ def batch_generate(train_case, max_batch_size = 64):
             mask_batch_list.append(mask_in_batch)
             train_batch_list.append(train_case_in_batch)
 
-        train_list.append(train_batch_list)
-        mask_list.append(mask_batch_list)
+        yield numpy.array(train_batch_list),numpy.array(mask_batch_list)
 
-    train_list = train_list
-    mask_list = mask_list
+def generate_input_case(doc_mention_arrays,doc_pair_arrays):
 
-    return train_list,mask_list
-
-def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     train_case = []
-    action_case = []
-    reward = 0.0
-
-    cluster_info = []
-    new_cluster_num = 0
 
     mentions_num = len(doc_mention_arrays)
 
@@ -107,22 +93,34 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
-            #pair_features = doc_pair_arrays[(j,i)] 
             pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j -1]  #等差数列算出
             this_input = numpy.append(mention_array,mention_in_cluster_array)
             this_input = numpy.append(this_input,pair_features) 
             this_train_case.append(this_input)
 
-
         this_train_case = numpy.array(this_train_case)
 
         train_case.append(this_train_case)
 
-    train_list,mask_list = batch_generate(train_case) 
+    return train_case
 
-    for i in range(len(train_list)):
-        train_batch_list = train_list[i]
-        mask_batch_list = mask_list[i]
+def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+    reward = 0.0
+
+    cluster_info = []
+    new_cluster_num = 0
+
+    train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
+
+    action_list = []
+
+    train_list = []
+    mask_list = []
+    for train_batch_list, mask_batch_list in batch_generater(train_case):
+
+        train_list.append(train_batch_list)
+        mask_list.append(mask_batch_list)
+
         action_probabilities = list(network.predict_batch(train_batch_list,mask_batch_list)[0])
 
         actions = []
@@ -137,87 +135,29 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
                 should_cluster = cluster_info[action-1]
 
             cluster_info.append(should_cluster)
-        # cluster_info: save the cluster information for each mention
 
-        action_case.append(actions)
+        action_list.append(actions)
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
     reward_list = []
     for i in range(len(train_list)):
         reward_list.append([reward]*len(train_list[i]))
 
-    return train_list,mask_list,action_case,reward_list
-
-def generate_policy_case_with_train_mask(train_list,mask_list,gold_chain=[],network=None):
-    action_case = []
-    reward = 0.0
-
-    cluster_info = []
-    new_cluster_num = 0
-
-    mentions_num = len(train_list)
-
-    action_probabilities = list(network.predict_batch(train_list,mask_list)[0])
-    for action_probability in action_probabilities:
-        action = sample_action(action_probability)
-        action_case.append(action)
-
-        if (action-1) == -1: # -1 means a new cluster
-            should_cluster = new_cluster_num
-            new_cluster_num += 1
-        else:
-            should_cluster = cluster_info[action-1]
-
-        cluster_info.append(should_cluster)
-        # cluster_info: save the cluster information for each mention
-
-    reward = get_reward(cluster_info,gold_chain,new_cluster_num)
-    reward_list = [reward]*mentions_num
-
-    return action_case,reward_list
+    return train_list,mask_list,action_list,reward_list
 
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
-    train_case = []
-    action_case = []
-
     cluster_info = []
     new_cluster_num = 0
 
-    mentions_num = len(doc_mention_arrays)
+    train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
 
-    for i in range(mentions_num):
-        mention_array = doc_mention_arrays[i]
-        this_train_case = []
-
-        ## add a Noun cluster
-        Noun_cluster_array = numpy.array([0.0]*len(mention_array))
-        this_input = numpy.append(mention_array,Noun_cluster_array)
-        this_input = numpy.append(this_input,numpy.array([0.0]*28))
-        this_train_case.append(this_input)
-
-        for j in range(0,i):
-            mention_in_cluster_array = doc_mention_arrays[j]
-            #pair_features = doc_pair_arrays[(j,i)] 
-            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j -1]  #等差数列算出
-            this_input = numpy.append(mention_array,mention_in_cluster_array)
-            this_input = numpy.append(this_input,pair_features) 
-            this_train_case.append(this_input)
-
-
-        this_train_case = numpy.array(this_train_case)
-
-        train_case.append(this_train_case)
-
-    train_list,mask_list = batch_generate(train_case) 
-    for i in range(len(train_list)):
-        train_batch_list = train_list[i]
-        mask_batch_list = mask_list[i]
+    for train_batch_list, mask_batch_list in batch_generater(train_case):
 
         action_probabilities = list(network.predict_batch(train_batch_list,mask_batch_list)[0])
 
         for action_probability in action_probabilities:
+
             action = choose_action(action_probability)
-            action_case.append(action)
 
             if (action-1) == -1: # -1 means a new cluster
                 should_cluster = new_cluster_num
@@ -226,31 +166,6 @@ def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
                 should_cluster = cluster_info[action-1]
 
             cluster_info.append(should_cluster)
-
-    ev_document = get_evaluation_document(cluster_info,gold_chain,new_cluster_num)
-
-    return ev_document,train_list,mask_list
-
-def generate_policy_test_with_train_mask(train_list,mask_list,gold_chain=[],network=None):
-
-    action_case = []
-    cluster_info = []
-    new_cluster_num = 0
-
-    mentions_num = len(train_list)
-
-    action_probabilities = list(network.predict_batch(train_list,mask_list)[0])
-    for action_probability in action_probabilities:
-        action = sample_action(action_probability)
-        action_case.append(action)
-
-        if (action-1) == -1: # -1 means a new cluster
-            should_cluster = new_cluster_num
-            new_cluster_num += 1
-        else:
-            should_cluster = cluster_info[action-1]
-
-        cluster_info.append(should_cluster)
 
     ev_document = get_evaluation_document(cluster_info,gold_chain,new_cluster_num)
 
