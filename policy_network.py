@@ -48,7 +48,7 @@ def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     return ev_document
 
 
-def batch_generate(train_case, max_batch_size = 256):
+def batch_generate(train_case, max_batch_size = 64):
 
     train_list = []
     mask_list = []
