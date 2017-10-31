@@ -24,7 +24,9 @@ else:
 
 class NetWork():
     def __init__(self,n_inpt,n_hidden):
-        ## embedding = 832 for cn, 650 for en
+        ## input = 1738 for cn 1374 for en
+        ## embedding for each mention = 855 for cn, 673 for en
+        ## pair_feature = 28
 
         activate=ReLU
 
@@ -39,33 +41,29 @@ class NetWork():
 
         self.hidden_layer_1 = activate(T.dot(self.x_inpt,w_h_1) + b_h_1)
 
-        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden,pre="hidden_layer",ones=False) 
+        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer",ones=False) 
         self.params += [w_h_2,b_h_2]
 
         self.hidden_layer_2 = activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2)
 
-        w_h_3,b_h_3 = init_weight(n_hidden,1,pre="output_layer",ones=False) 
+        w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer",ones=False) 
         self.params += [w_h_3,b_h_3]
 
         self.output_layer = activate(T.dot(self.hidden_layer_2,w_h_3) + b_h_3)
 
         self.policy = softmax(self.output_layer.flatten())[0]
 
-        self.get_out = theano.function(
+        self.predict = theano.function(
             inputs=[self.x_inpt],
             outputs=[self.policy],
+            allow_input_downcast=True,
             on_unused_input='warn')
 
         lr = T.scalar()
         Reward = T.scalar("Reward")
         y = T.iscalar('classification')
 
-        cost = (-Reward) * self.policy[y]
-
-        self.get_cost = theano.function(
-            inputs=[self.x_inpt,y,Reward],
-            outputs=[cost],
-            on_unused_input='warn')
+        cost = (-Reward) * T.log(self.policy[y])
 
         updates = lasagne.updates.sgd(cost, self.params, lr)
 
@@ -73,6 +71,7 @@ class NetWork():
             inputs=[self.x_inpt,y,Reward,lr],
             outputs=[cost],
             on_unused_input='warn',
+            allow_input_downcast=True,
             updates=updates)
 
     def show_para(self):
@@ -83,15 +82,16 @@ def main():
     r = NetWork(3,2)
 
     zp_x = [[2,3,4],[2,98,4]]
-    print r.get_out(zp_x)[0][0]
-    print r.get_out(zp_x)[0][1]
+    print list(r.predict(zp_x)[0])[0]
+    print r.predict(zp_x)[0][0]
+    print r.predict(zp_x)[0][1]
     #print r.get_cost(zp_x,0,100)
     #print r.get_cost(zp_x,1)
     r.train_step(zp_x,0,0.2,5)
     r.train_step(zp_x,0,0.2,5)
     r.train_step(zp_x,0,0.2,5)
     r.train_step(zp_x,1,1,5)
-    print r.get_out(zp_x)[0]
+    print r.predict(zp_x)[0]
 
 if __name__ == "__main__":
     main()
