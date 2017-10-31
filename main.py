@@ -53,10 +53,8 @@ def main():
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
 
-    # for mention_array: list
-    # for mention_pair_array: list
-    
     for echo in range(20):
+        start_time = timeit.default_timer()
         print "ECHO:",echo
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
             train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
@@ -67,8 +65,12 @@ def main():
                 reward_batch = reward_list[batch_num]
 
                 network_model.train_step(train_batch,mask_batch,action_batch,reward_batch,0.01)
+        end_time = timeit.default_timer()
+        print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
 
+        ## dev
         dev_docs = []
+        start_time = timeit.default_timer()
         for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
             ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
             dev_docs.append(ev_doc)
@@ -79,8 +81,13 @@ def main():
         print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
         cp,cr,cf = evaluation.evaluate_documents(dev_docs,evaluation.ceafe)
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+
+        end_time = timeit.default_timer()
+        print >> sys.stderr, "DEV Use %.3f seconds"%(end_time-start_time)
     
+        ## test
         test_docs = []
+        start_time = timeit.default_timer()
         for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
             ev_doc = policy_network.generate_policy_test(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain,network_model)
             test_docs.append(ev_doc)
@@ -91,6 +98,9 @@ def main():
         print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
         cp,cr,cf = evaluation.evaluate_documents(test_docs,evaluation.ceafe)
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+
+        end_time = timeit.default_timer()
+        print >> sys.stderr, "TEST Use %.3f seconds"%(end_time-start_time)
 
 
 
