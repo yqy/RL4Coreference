@@ -76,10 +76,10 @@ def batch_generate(train_case, max_batch_size = 256):
             train_batch_list.append(train_case_in_batch)
 
         train_list.append(train_batch_list)
-        mask_list.append(mask_list)
+        mask_list.append(mask_batch_list)
 
-    train_list = numpy.array(train_list)
-    mask_list = numpy.array(mask_list)
+    train_list = train_list
+    mask_list = mask_list
 
     return train_list,mask_list
 
