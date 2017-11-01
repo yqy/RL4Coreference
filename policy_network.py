@@ -43,7 +43,8 @@ def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     for mention_num in range(len(cluster_info)):
         cluster_num = cluster_info[mention_num]
         predict[cluster_num].append(mention_num)
-
+    print >> sys.stderr," * Gold:",gold_info
+    print >> sys.stderr," * Predict:",predict
     ev_document = evaluation.EvaluationDocument(gold_info,predict)
     return ev_document
 
@@ -171,50 +172,3 @@ def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     ev_document = get_evaluation_document(cluster_info,gold_chain,new_cluster_num)
 
     return ev_document
-
-
-def main():
-
-    embedding_dir = args.embedding+args.language
-    print >> sys.stderr,"Read Embedding from %s ..."%embedding_dir
-    embedding_dimention = 50
-    if args.language == "cn":
-        embedding_dimention = 64
-    w2v = word2vec.Word2Vec(embedding_dir,embedding_dimention)
-
-    print >> sys.stderr,"Building Model ..."
-
-    #network_model
-    if os.path.isfile("./model/network_model."+args.language):
-        read_f = file('./model/network_model.'+args.language, 'rb')
-        network_model = cPickle.load(read_f)
-        print >> sys.stderr,"Read model from ./model/network_model."+args.language
-    else:
-        inpt_dimention = 1738
-        if args.language == "en":
-            inpt_dimention = 1374
-        network_model = network.NetWork(inpt_dimention,1000)
-        print >> sys.stderr,"save model ..."
-        save_f = file('./model/network_model.'+args.language, 'wb')
-        cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-        save_f.close()
-
-    train_docs = DataGenerate.doc_data_generater("train")
-    dev_docs = DataGenerate.doc_data_generater("dev")
-    test_docs = DataGenerate.doc_data_generater("test")
-
-    # for mention_array: list
-    # for mention_pair_array: list
-
-    for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-        #generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain)
-        train_case,action_case,reward = generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
-        
-
-    #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
-    #    generate_policy_case(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain)
-    #for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
-    #    generate_policy_case(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain)
-
-if __name__ == "__main__":
-    main()

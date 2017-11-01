@@ -84,6 +84,7 @@ def main():
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "DEV Use %.3f seconds"%(end_time-start_time)
+        sys.stdout.flush()
     
         ## test
         test_docs = []
@@ -101,6 +102,7 @@ def main():
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "TEST Use %.3f seconds"%(end_time-start_time)
+        sys.stdout.flush()
 
 
 

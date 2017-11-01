@@ -135,14 +135,15 @@ class Document():
     def get_gold_chain(self,gold_chain):
         # generate gold chain by using mention_num instead of using mention_id
         rl = []
-
+        neg_num = -1
         for chain in gold_chain:
             this_chain = []
             for mention_id in chain:
                 if mention_id in self.id2num:
                     this_chain.append(self.id2num[mention_id])
                 else:
-                    this_chain.append(-1)
+                    this_chain.append(neg_num)
+                    neg_num -= 1
             rl.append(this_chain)
         return rl
 
