@@ -81,7 +81,8 @@ class NetWork():
 
         cost = T.mean((-Reward) * T.log(self.policy[T.arange(y.shape[0]), y]))
 
-        updates = lasagne.updates.sgd(cost, self.params, lr)
+        #updates = lasagne.updates.sgd(cost, self.params, lr)
+        updates = lasagne.updates.rmsprop(cost, self.params, learning_rate=0.001)
 
         self.train_step = theano.function(
             inputs=[self.x_inpt,self.x_mask,y,Reward,lr],

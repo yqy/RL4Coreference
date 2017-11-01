@@ -56,7 +56,9 @@ def main():
     for echo in range(20):
         start_time = timeit.default_timer()
         print "ECHO:",echo
+        reward_baseline = []
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            this_reward = 0.0
             train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
             for batch_num in range(len(train_list)):
                 train_batch = train_list[batch_num]
@@ -64,9 +66,17 @@ def main():
                 action_batch = action_case[batch_num]
                 reward_batch = reward_list[batch_num]
 
-                network_model.train_step(train_batch,mask_batch,action_batch,reward_batch,0.01)
+                this_reward = reward_batch[0]
+
+                reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
+                norm_reward = numpy.array(reward_batch) - reward_b
+
+                network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.001)
         end_time = timeit.default_timer()
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
+        reward_baseline.append(this_reward)
+        if len(reward_baseline) >= 32:
+            reward_baselin = reward_baseline[1:]
 
         ## dev
         dev_docs_for_test = []
