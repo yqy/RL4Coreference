@@ -21,22 +21,25 @@ from theano.tensor import tanh
 
 np.random.seed(args.random_seed)
 
-def init_weight(n_in,n_out,activation_fn=sigmoid,pre="",uni=True,ones=False):
+def init_weight(n_in,n_out,activation_fn=sigmoid,pre="",special=False,uni=True,ones=False):
     rng = np.random.RandomState(1234)
-    if uni:
-        W_values = np.asarray(rng.normal(size=(n_in, n_out), scale= .01, loc = .0), dtype = theano.config.floatX)
+    if special:
+        W_values = glorot_uniform((n_in, n_out)) 
     else:
-        W_values = np.asarray(
-            rng.uniform(
-                low=-np.sqrt(6. / np.sqrt(n_in + n_out)),
-                high=np.sqrt(6. / np.sqrt(n_in + n_out)),
-                size=(n_in, n_out)
-            ),
-            dtype=theano.config.floatX
-        )
-        if activation_fn == theano.tensor.nnet.sigmoid:
-            W_values *= 4
-            W_values /= 6
+        if uni:
+            W_values = np.asarray(rng.normal(size=(n_in, n_out), scale= .01, loc = .0), dtype = theano.config.floatX)
+        else:
+            W_values = np.asarray(
+                rng.uniform(
+                    low=-np.sqrt(6. / np.sqrt(n_in + n_out)),
+                    high=np.sqrt(6. / np.sqrt(n_in + n_out)),
+                    size=(n_in, n_out)
+                ),
+                dtype=theano.config.floatX
+            )
+            if activation_fn == theano.tensor.nnet.sigmoid:
+                W_values *= 4
+                W_values /= 6
 
     b_values = np.zeros((n_out,), dtype=theano.config.floatX)
 

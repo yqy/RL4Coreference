@@ -33,7 +33,7 @@ def choose_action(action_probability):
 def get_reward(cluster_info,gold_info,max_cluster_num):
     ev_document = get_evaluation_document(cluster_info,gold_info,max_cluster_num)
     p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
-    print >> sys.stderr, p,r,f
+    #print >> sys.stderr, p,r,f
     return f
 
 def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
@@ -43,8 +43,8 @@ def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     for mention_num in range(len(cluster_info)):
         cluster_num = cluster_info[mention_num]
         predict[cluster_num].append(mention_num)
-    print >> sys.stderr," * Gold:",gold_info
-    print >> sys.stderr," * Predict:",predict
+    #print >> sys.stderr," * Gold:",gold_info
+    #print >> sys.stderr," * Predict:",predict
     ev_document = evaluation.EvaluationDocument(gold_info,predict)
     return ev_document
 

@@ -39,37 +39,39 @@ class NetWork():
         self.x_inpt_single = T.matrix("input_pair_embeddings")
         self.x_mask = T.matrix("mask")
 
-        w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer",ones=False) 
+        #w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer",ones=False) 
+        w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer",special=True,ones=False) 
         self.params += [w_h_1,b_h_1]
 
         self.hidden_layer_1 = activate(T.dot(self.x_inpt,w_h_1) + b_h_1)
 
-        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer",ones=False) 
+        #w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer",ones=False) 
+        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer",special=True,ones=False) 
         self.params += [w_h_2,b_h_2]
 
         self.hidden_layer_2 = activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2)
 
-        w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer",ones=False) 
+        #w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer",ones=False)
+        w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer",ones=False,special=True)
         self.params += [w_h_3,b_h_3]
 
         self.output_layer = activate(T.dot(self.hidden_layer_2,w_h_3) + b_h_3)
 
         output_after_mask = T.switch(self.x_mask, self.output_layer.flatten(2), numpy.NINF)
 
-        self.output_single = activate(T.dot(activate(T.dot(activate(T.dot(self.x_inpt_single,w_h_1) + b_h_1),w_h_2) + b_h_2),w_h_3) +b_h_3)
-        self.policy_single = softmax(self.output_single.flatten())[0]
-        self.predict = theano.function(
-            inputs=[self.x_inpt_single],
-            outputs=[self.policy_single],
-            allow_input_downcast=True,
-            on_unused_input='warn')
+        #self.output_single = activate(T.dot(activate(T.dot(activate(T.dot(self.x_inpt_single,w_h_1) + b_h_1),w_h_2) + b_h_2),w_h_3) +b_h_3)
+        #self.policy_single = softmax(self.output_single.flatten())[0]
+        #self.predict = theano.function(
+        #    inputs=[self.x_inpt_single],
+        #    outputs=[self.policy_single],
+        #    allow_input_downcast=True,
+        #    on_unused_input='warn')
 
         self.policy = softmax(output_after_mask)
 
         self.predict_batch = theano.function(
             inputs=[self.x_inpt,self.x_mask],
             outputs=[self.policy],
-            #outputs=[self.output_layer],
             allow_input_downcast=True,
             on_unused_input='warn')
 

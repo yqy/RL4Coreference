@@ -199,7 +199,6 @@ def get_embedding(mention,w2v,doc):
 
     feature_array = numpy.array(feature_array) # dimention = 23
 
-    #return embedding_array,feature_array 
     return numpy.append(embedding_array,feature_array)
 
 def get_pair_embedding(i,j,doc):
@@ -234,6 +233,7 @@ def array_generater(docs,typ,w2v):
     if os.path.isfile("./model/mention_array_%s."%typ+args.language):
         print >> sys.stderr,"Read data from ./model/mention_array_%s."%typ+args.language
         read_f = file("./model/mention_array_%s."%typ+args.language, 'rb')
+        doc_num = 1
         while True:
             start_time = timeit.default_timer()
             doc_mention_array,doc_pair_array,doc_gold_chain = cPickle.load(read_f)
@@ -241,8 +241,8 @@ def array_generater(docs,typ,w2v):
                 break
             yield doc_mention_array,doc_pair_array,doc_gold_chain
             end_time = timeit.default_timer()
-            print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
-
+            print >> sys.stderr, "Use %.3f seconds for doc %d"%(end_time-start_time,doc_num)
+            doc_num += 1
     else:
         print >> sys.stderr,"Generate %s arrays for %s"%(typ,args.language)
 
@@ -269,23 +269,12 @@ def array_generater(docs,typ,w2v):
                     pair_arrays.append(pair_feature) # i,j : pair_arrays[i*mentions_nums+j] = pair_feature
                     #pair_arrays[(i,j)] = pair_feature
 
-            #doc_mention_arrays.append(numpy.array(mention_arrays))
-            #doc_pair_arrays.append(numpy.array(pair_arrays))
-            #doc_gold_chains.append(doc.gold_chain)
-
             cPickle.dump((mention_arrays,pair_arrays,doc.gold_chain), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
 
             yield numpy.array(mention_arrays),numpy.array(pair_arrays),doc.gold_chain
    
-        #doc_mention_arrays = numpy.array(doc_mention_arrays)
-        #doc_pair_arrays = numpy.array(doc_pair_arrays)
-
         cPickle.dump((ENDTAG,None,None), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
-
-        #end_time = timeit.default_timer()
-        #print >> sys.stderr, "Use %.3f seconds"%(end_time-start_time)
-    #return doc_mention_arrays,doc_pair_arrays,doc_gold_chains
 
 
 def main():
