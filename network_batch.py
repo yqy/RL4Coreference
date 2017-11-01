@@ -68,7 +68,6 @@ class NetWork():
             allow_input_downcast=True,
             on_unused_input='warn')
 
-        '''
         lr = T.scalar()
         Reward = T.vector("Reward")
         y = T.ivector('classification')
@@ -84,7 +83,7 @@ class NetWork():
             on_unused_input='warn',
             allow_input_downcast=True,
             updates=updates)
-        '''
+
         pre_lr = T.scalar()
         lable = T.imatrix()
         preCost = T.mean(-T.log(T.sum(self.policy*lable,axis=1)))
