@@ -72,10 +72,12 @@ class NetWork():
         Reward = T.vector("Reward")
         y = T.ivector('classification')
 
-        cost = T.mean((-Reward) * T.log(self.policy[T.arange(y.shape[0]), y]))
+        cost = T.mean((-Reward) * T.log(self.policy[T.arange(y.shape[0]), y] + 1e-6))
 
-        #updates = lasagne.updates.sgd(cost, self.params, lr)
-        updates = lasagne.updates.rmsprop(cost, self.params, learning_rate=0.001)
+        max_norm = 5.0
+        grads = T.grad(cost, self.params)
+        grads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in grads]
+        updates = lasagne.updates.rmsprop(grads, self.params, learning_rate=0.001)
 
         self.train_step = theano.function(
             inputs=[self.x_inpt,self.x_mask,y,Reward,lr],
@@ -86,9 +88,13 @@ class NetWork():
 
         pre_lr = T.scalar()
         lable = T.imatrix()
-        preCost = T.mean(-T.log(T.sum(self.policy*lable,axis=1)))
+        preCost = T.mean(-T.log(T.sum(self.policy*lable,axis=1) + 1e-6))
 
-        pre_updates = lasagne.updates.rmsprop(preCost, self.params, learning_rate=0.001)
+        
+        max_norm = 5.0
+        pregrads = T.grad(preCost, self.params)
+        pregrads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in pregrads]
+        pre_updates = lasagne.updates.rmsprop(pregrads, self.params, learning_rate=0.001)
 
         self.pre_train_step = theano.function(
             inputs=[self.x_inpt,self.x_mask,lable,pre_lr],
