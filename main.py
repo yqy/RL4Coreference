@@ -53,6 +53,23 @@ def main():
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
 
+    #pretrain
+    for echo in range(10):
+        start_time = timeit.default_timer()
+        print "Pretrain ECHO:",echo
+        cost_this_turn = 0.0
+        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            for train_list,mask_list,lable_list in policy_network.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+            
+                cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.001)[0]
+
+        end_time = timeit.default_timer()
+        print >> sys.stderr, "Total cost:",cost_this_turn
+        print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
+
+    return
+
+    ##train
     for echo in range(20):
         start_time = timeit.default_timer()
         print "ECHO:",echo

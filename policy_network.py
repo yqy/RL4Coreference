@@ -77,6 +77,40 @@ def batch_generater(train_case, max_batch_size = 64):
 
         yield numpy.array(train_batch_list),numpy.array(mask_batch_list)
 
+def batch_generater_pretrain(train_case, lables, max_batch_size = 64):
+
+    total_num = len(train_case)
+    batch_num = (total_num/max_batch_size)+1
+
+    for i in range(batch_num):
+        start = i*max_batch_size
+        end = (i+1)*max_batch_size
+        this_train_batch = train_case[start:end]
+        this_lable_batch = lables[start:end]
+
+        train_batch_list = []
+        mask_batch_list = []
+        lable_batch_list = []
+
+        if len(this_train_batch) <= 1:
+            continue
+        max_length = len(list(this_train_batch[-1]))
+
+        for i in range(len(this_train_batch)):
+            this_train_cas = list(this_train_batch[i])
+            add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
+            train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+            train_batch_list.append(train_case_in_batch)
+
+            mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
+            mask_batch_list.append(mask_in_batch)
+
+            this_lable = list(this_lable_batch[i])
+            lable_in_batch = this_lable + [0]*(max_length - len(this_train_cas))
+            lable_batch_list.append(lable_in_batch)
+
+        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
+
 def generate_input_case(doc_mention_arrays,doc_pair_arrays):
 
     train_case = []
@@ -146,6 +180,27 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
         reward_list.append([reward]*len(train_list[i]))
 
     return train_list,mask_list,action_list,reward_list
+
+def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+    cluster_info = []
+    new_cluster_num = 0
+
+    train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
+    gold_dict = {}
+    lable_in_gold = []
+    for chain in gold_chain:
+        for item in chain:
+            gold_dict[item] = chain
+    for i in range(len(train_case)):
+        lables = [0]*i
+        if gold_dict.has_key(i):
+            for j in gold_dict[i]:
+                if j < i and j >= 0:
+                    lables[j] = 1
+        lables = [1] + lables if sum(lables) == 0 else [0] + lables
+        lable_in_gold.append(lables)
+
+    return batch_generater_pretrain(train_case,lable_in_gold)
 
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     cluster_info = []

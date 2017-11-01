@@ -59,22 +59,16 @@ class NetWork():
 
         output_after_mask = T.switch(self.x_mask, self.output_layer.flatten(2), numpy.NINF)
 
-        #self.output_single = activate(T.dot(activate(T.dot(activate(T.dot(self.x_inpt_single,w_h_1) + b_h_1),w_h_2) + b_h_2),w_h_3) +b_h_3)
-        #self.policy_single = softmax(self.output_single.flatten())[0]
-        #self.predict = theano.function(
-        #    inputs=[self.x_inpt_single],
-        #    outputs=[self.policy_single],
-        #    allow_input_downcast=True,
-        #    on_unused_input='warn')
-
         self.policy = softmax(output_after_mask)
 
+        
         self.predict_batch = theano.function(
             inputs=[self.x_inpt,self.x_mask],
             outputs=[self.policy],
             allow_input_downcast=True,
             on_unused_input='warn')
 
+        '''
         lr = T.scalar()
         Reward = T.vector("Reward")
         y = T.ivector('classification')
@@ -90,6 +84,26 @@ class NetWork():
             on_unused_input='warn',
             allow_input_downcast=True,
             updates=updates)
+        '''
+        pre_lr = T.scalar()
+        lable = T.imatrix()
+        preCost = T.mean(-T.log(T.sum(self.policy*lable,axis=1)))
+
+        pre_updates = lasagne.updates.rmsprop(preCost, self.params, learning_rate=0.001)
+
+        self.pre_train_step = theano.function(
+            inputs=[self.x_inpt,self.x_mask,lable,pre_lr],
+            outputs=[preCost],
+            on_unused_input='warn',
+            allow_input_downcast=True,
+            updates=pre_updates)
+
+        self.predict_lable = theano.function(
+            inputs=[self.x_inpt,self.x_mask,lable],
+            outputs=[preCost],
+            allow_input_downcast=True,
+            on_unused_input='warn')
+
 
     def show_para(self):
         for para in self.params:
@@ -100,18 +114,25 @@ def main():
 
     zp_x = [[[2,3,4],[2,98,4]]*2,[[2,98,4],[0,0,0]]*2]
     mask = [[1,1,1,1],[1,0,1,1]]
-    print r.predict(zp_x,mask)[0]
+
+    lable = [[0,1,0,0],[1,0,1,0]]
 
     y = [3,2]
     re = [0.8,0.9]
 
+    print r.predict_batch(zp_x,mask)[0]
     print r.predict_batch(zp_x,mask)[0][0]
     print r.predict_batch(zp_x,mask)[0][1]
-    r.train_step(zp_x,mask,y,re,5)
-    r.train_step(zp_x,mask,y,re,5)
-    r.train_step(zp_x,mask,y,re,5)
-    r.train_step(zp_x,mask,y,re,5)
-    print r.predict_batch(zp_x,mask)
+    print r.predict_lable(zp_x,mask,lable)
+    r.pre_train_step(zp_x,mask,lable,5)
+    r.pre_train_step(zp_x,mask,lable,5)
+    r.pre_train_step(zp_x,mask,lable,5)
+    print r.predict_batch(zp_x,mask)[0]
+    #r.train_step(zp_x,mask,y,re,5)
+    #r.train_step(zp_x,mask,y,re,5)
+    #r.train_step(zp_x,mask,y,re,5)
+    #r.train_step(zp_x,mask,y,re,5)
+    #print r.predict_batch(zp_x,mask)
 
 def test_switch():
     a = T.matrix()
