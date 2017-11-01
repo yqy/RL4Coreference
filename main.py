@@ -57,6 +57,7 @@ def main():
         start_time = timeit.default_timer()
         print "ECHO:",echo
         reward_baseline = []
+        cost_this_turn = 0.0
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
             this_reward = 0.0
             train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
@@ -71,9 +72,11 @@ def main():
                 reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
                 norm_reward = numpy.array(reward_batch) - reward_b
 
-                network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.001)
+                cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.001)[0]
         end_time = timeit.default_timer()
+        print >> sys.stderr, "Total cost:",cost_this_turn
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
+        
         reward_baseline.append(this_reward)
         if len(reward_baseline) >= 32:
             reward_baselin = reward_baseline[1:]
@@ -81,7 +84,8 @@ def main():
         ## dev
         dev_docs_for_test = []
         start_time = timeit.default_timer()
-        for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+        #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+        for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
             ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
             dev_docs_for_test.append(ev_doc)
         print "DEV"
