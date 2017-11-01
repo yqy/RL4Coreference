@@ -84,8 +84,7 @@ def main():
         ## dev
         dev_docs_for_test = []
         start_time = timeit.default_timer()
-        #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
-        for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
             ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
             dev_docs_for_test.append(ev_doc)
         print "DEV"
