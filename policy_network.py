@@ -144,7 +144,7 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     for i in range(len(train_list)):
         reward_list.append([reward]*len(train_list[i]))
 
-    return numpy.array(train_list),numpy.array(mask_list),action_list,reward_list
+    return train_list,mask_list,action_list,reward_list
 
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     cluster_info = []
