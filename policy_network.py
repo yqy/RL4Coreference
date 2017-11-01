@@ -26,7 +26,8 @@ def sample_action(action_probability):
     action = numpy.random.choice(numpy.arange(len(action_probability)),p=action_probability)
     return action
 def choose_action(action_probability):
-    action = action_probability.index(max(list(action_probability)))
+    ac_list = list(action_probability)
+    action = ac_list.index(max(ac_list))
     return action
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
@@ -143,7 +144,7 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     for i in range(len(train_list)):
         reward_list.append([reward]*len(train_list[i]))
 
-    return train_list,mask_list,action_list,reward_list
+    return numpy.array(train_list),numpy.array(mask_list),action_list,reward_list
 
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     cluster_info = []
