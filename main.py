@@ -69,17 +69,17 @@ def main():
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
 
         ## dev
-        dev_docs = []
+        dev_docs_for_test = []
         start_time = timeit.default_timer()
         for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
             ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
-            dev_docs.append(ev_doc)
+            dev_docs_for_test.append(ev_doc)
         print "DEV"
-        mp,mr,mf = evaluation.evaluate_documents(dev_docs,evaluation.muc)
+        mp,mr,mf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.muc)
         print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
-        bp,br,bf = evaluation.evaluate_documents(dev_docs,evaluation.b_cubed)
+        bp,br,bf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.b_cubed)
         print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
-        cp,cr,cf = evaluation.evaluate_documents(dev_docs,evaluation.ceafe)
+        cp,cr,cf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.ceafe)
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
 
         end_time = timeit.default_timer()
@@ -87,17 +87,17 @@ def main():
         sys.stdout.flush()
     
         ## test
-        test_docs = []
+        test_docs_for_test = []
         start_time = timeit.default_timer()
         for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
             ev_doc = policy_network.generate_policy_test(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain,network_model)
-            test_docs.append(ev_doc)
+            test_docs_for_test.append(ev_doc)
         print "TEST"
-        mp,mr,mf = evaluation.evaluate_documents(test_docs,evaluation.muc)
+        mp,mr,mf = evaluation.evaluate_documents(test_docs_for_test,evaluation.muc)
         print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
-        bp,br,bf = evaluation.evaluate_documents(test_docs,evaluation.b_cubed)
+        bp,br,bf = evaluation.evaluate_documents(test_docs_for_test,evaluation.b_cubed)
         print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
-        cp,cr,cf = evaluation.evaluate_documents(test_docs,evaluation.ceafe)
+        cp,cr,cf = evaluation.evaluate_documents(test_docs_for_test,evaluation.ceafe)
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
 
         end_time = timeit.default_timer()
