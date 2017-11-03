@@ -54,6 +54,7 @@ def main():
     test_docs = DataGenerate.doc_data_generater("test")
 
     #pretrain
+    times = 0
     last_cost = 1000000
     for echo in range(20):
         start_time = timeit.default_timer()
@@ -63,8 +64,10 @@ def main():
             for train_list,mask_list,lable_list in policy_network.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.001)[0]
         if cost_this_turn > last_cost:
-            print >> sys.stderr, "Cost becomes large, Break!!"
-            break
+            times += 1
+            if times == 2:
+                print >> sys.stderr, "Cost becomes large, Break!!"
+                break
         last_cost = cost_this_turn
 
         end_time = timeit.default_timer()
