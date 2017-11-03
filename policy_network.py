@@ -96,18 +96,37 @@ def batch_generater_pretrain(train_case, lables, max_batch_size = 64):
             continue
         max_length = len(list(this_train_batch[-1]))
 
+        neg_num = 0
+        pos_num = 0
         for i in range(len(this_train_batch)):
+            this_lable = list(this_lable_batch[i])
+            add = True
+            if this_lable[0] == 1: ## neg
+                if neg_num >= pos_num:
+                    ra = random.randint(0,neg_num-pos_num)
+                    if ra == 0:
+                        add = True
+                        neg_num += 1
+                    else:
+                        add = False
+            else:
+                pos_num += 1
+
+            if not add:
+                continue 
+
             this_train_cas = list(this_train_batch[i])
             add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
             train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
-            train_batch_list.append(train_case_in_batch)
 
             mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
             mask_batch_list.append(mask_in_batch)
 
-            this_lable = list(this_lable_batch[i])
             lable_in_batch = this_lable + [0]*(max_length - len(this_train_cas))
             lable_batch_list.append(lable_in_batch)
+
+        if len(lable_batch_list) == 0:
+            continue
 
         yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
 
