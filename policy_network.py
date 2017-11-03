@@ -118,6 +118,7 @@ def batch_generater_pretrain(train_case, lables, max_batch_size = 64):
             this_train_cas = list(this_train_batch[i])
             add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
             train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+            train_batch_list.append(train_case_in_batch)
 
             mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
             mask_batch_list.append(mask_in_batch)
