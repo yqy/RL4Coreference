@@ -81,12 +81,21 @@ def main():
     print >> sys.stderr,"Pre Train done"
 
     ##train
+
+    train4test = [] # add 5 items for testing the training performance
+    add2train = True
+
     for echo in range(30):
         start_time = timeit.default_timer()
-        print "ECHO:",echo
         reward_baseline = []
         cost_this_turn = 0.0
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            if add2train:
+                if random.randint(1,200) == 100:
+                    train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
+                    if len(train4test) == 5:
+                        add2train = False
+
             this_reward = 0.0
             train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
             for batch_num in range(len(train_list)):
@@ -109,6 +118,21 @@ def main():
         if len(reward_baseline) >= 32:
             reward_baselin = reward_baseline[1:]
 
+        ## test training performance
+        train_docs_for_test = []
+        start_time = timeit.default_timer()
+        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in train4test:
+            ev_doc = policy_network.generate_policy_test(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
+            train_docs_for_test.append(ev_doc)
+        print "** Echo: %d **"%echo
+        print "TRAIN"
+        mp,mr,mf = evaluation.evaluate_documents(train_docs_for_test,evaluation.muc)
+        print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
+        bp,br,bf = evaluation.evaluate_documents(train_docs_for_test,evaluation.b_cubed)
+        print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
+        cp,cr,cf = evaluation.evaluate_documents(train_docs_for_test,evaluation.ceafe)
+        print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+        print
         ## dev
         dev_docs_for_test = []
         start_time = timeit.default_timer()
@@ -122,6 +146,7 @@ def main():
         print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
         cp,cr,cf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.ceafe)
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+        print 
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "DEV Use %.3f seconds"%(end_time-start_time)
@@ -140,11 +165,15 @@ def main():
         print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
         cp,cr,cf = evaluation.evaluate_documents(test_docs_for_test,evaluation.ceafe)
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+        print 
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "TEST Use %.3f seconds"%(end_time-start_time)
         sys.stdout.flush()
 
+        save_f = file('./model/nets/ network_model.%s.%d'%(args.language,echo), 'wb')
+        cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+        save_f.close()
 
 
 if __name__ == "__main__":

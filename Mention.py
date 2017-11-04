@@ -23,9 +23,8 @@ class Mention():
             mention_num = 344
             mention_type = 'NOMINAL'
             start_index = 16
-sent_num            end_index = 17
+            end_index = 17
             contained-in-other-mention = 0
-
         '''
 
 

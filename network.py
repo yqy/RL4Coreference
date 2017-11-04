@@ -85,8 +85,6 @@ def main():
     print list(r.predict(zp_x)[0])[0]
     print r.predict(zp_x)[0][0]
     print r.predict(zp_x)[0][1]
-    #print r.get_cost(zp_x,0,100)
-    #print r.get_cost(zp_x,1)
     r.train_step(zp_x,0,0.2,5)
     r.train_step(zp_x,0,0.2,5)
     r.train_step(zp_x,0,0.2,5)

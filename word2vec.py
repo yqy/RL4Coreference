@@ -90,8 +90,8 @@ def generate_embedding_file_from_Kevin():
     # generate the word embedding file from Kevin's github file
     # https://github.com/clarkkev/deep-coref
     # "We use 50 dimensional word2vec embeddings for English (link) and 64 dimenensional polyglot embeddings for Chinese (link) in our paper."
-
     # for english embedding file
+
     f = open("/Users/yqy/Downloads/w2v_50d.txt")
     embedding_list = []
     while True:
