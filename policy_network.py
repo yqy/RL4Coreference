@@ -247,3 +247,4 @@ def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     ev_document = get_evaluation_document(cluster_info,gold_chain,new_cluster_num)
 
     return ev_document
+
