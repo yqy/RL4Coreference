@@ -17,6 +17,7 @@ import evaluation
 import policy_network
 import network
 import network_batch as network
+import pretrain
 
 import cPickle
 sys.setrecursionlimit(1000000)
@@ -36,8 +37,8 @@ def main():
 
     #network_model
     if os.path.isfile("./model/network_model."+args.language):
-        #read_f = file('./model/network_model.'+args.language, 'rb')
-        read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        read_f = file('./model/network_model.'+args.language, 'rb')
+        #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model."+args.language
     else:
@@ -57,19 +58,13 @@ def main():
     #pretrain
     times = 0
     last_cost = 1000000
-    for echo in range(5):
+    for echo in range(20):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-            for train_list,mask_list,lable_list in policy_network.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+            for train_list,mask_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.001)[0]
-        if cost_this_turn > last_cost:
-            times += 1
-            if times == 2:
-                print >> sys.stderr, "Cost becomes large, Break!!"
-                break
-        last_cost = cost_this_turn
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
@@ -78,14 +73,29 @@ def main():
     save_f = file('./model/network_model_pretrain.'+args.language, 'wb')
     cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
     save_f.close()
+    print >> sys.stderr,"Begin test on DEV after pertraining"
+
+    ## test performance after pretraining
+    dev_docs_for_test = []
+    for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+        ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+        dev_docs_for_test.append(ev_doc)
+    print "Performance on DEV after PreTRAINING"
+    mp,mr,mf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.muc)
+    print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
+    bp,br,bf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.b_cubed)
+    print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
+    cp,cr,cf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.ceafe)
+    print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+    print "##################################################" 
+    sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
 
     ##train
-
     train4test = [] # add 5 items for testing the training performance
     add2train = True
 
-    for echo in range(30):
+    for echo in range(20):
         start_time = timeit.default_timer()
         reward_baseline = []
         cost_this_turn = 0.0
@@ -97,26 +107,22 @@ def main():
                         add2train = False
 
             this_reward = 0.0
-            train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
-            for batch_num in range(len(train_list)):
-                train_batch = train_list[batch_num]
-                mask_batch = mask_list[batch_num]
-                action_batch = action_case[batch_num]
-                reward_batch = reward_list[batch_num]
+            #train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
+            for train_batch, mask_batch, action_batch, reward_batch in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
 
                 this_reward = reward_batch[0]
 
                 reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
                 norm_reward = numpy.array(reward_batch) - reward_b
 
-                cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.001)[0]
+                cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.00002)[0]
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
         
-        reward_baseline.append(this_reward)
-        if len(reward_baseline) >= 32:
-            reward_baselin = reward_baseline[1:]
+        #reward_baseline.append(this_reward)
+        #if len(reward_baseline) >= 32:
+        #    reward_baselin = reward_baseline[1:]
 
         ## test training performance
         train_docs_for_test = []

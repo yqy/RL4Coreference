@@ -18,8 +18,6 @@ import evaluation
 import cPickle
 sys.setrecursionlimit(1000000)
 
-print >> sys.stderr, os.getpid()
-
 random.seed(args.random_seed)
 
 def sample_action(action_probability):
@@ -49,10 +47,13 @@ def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     return ev_document
 
 
-def batch_generater(train_case, max_batch_size = 64):
+def batch_generater(train_case, shuffle = True, max_batch_size = 64):
 
     total_num = len(train_case)
     batch_num = (total_num/max_batch_size)+1
+    
+    if shuffle:
+        numpy.random.shuffle(train_case)
 
     for i in range(batch_num):
         start = i*max_batch_size
@@ -64,7 +65,8 @@ def batch_generater(train_case, max_batch_size = 64):
 
         if len(this_train_batch) <= 1:
             continue
-        max_length = len(list(this_train_batch[-1]))
+        max_length = max([len(x) for x in this_train_batch])
+        #max_length = len(list(this_train_batch[-1]))
 
         for i in range(len(this_train_batch)):
             this_train_cas = list(this_train_batch[i])
@@ -77,61 +79,43 @@ def batch_generater(train_case, max_batch_size = 64):
 
         yield numpy.array(train_batch_list),numpy.array(mask_batch_list)
 
-def batch_generater_pretrain(train_case, lables, max_batch_size = 64):
+def batch_generater_shuffle(train_case, actions, max_batch_size = 64):
 
     total_num = len(train_case)
     batch_num = (total_num/max_batch_size)+1
+    
+    c = list(zip(train_case, actions))
+    numpy.random.shuffle(c)
+    train_case[:],actions[:] = zip(*c)
 
     for i in range(batch_num):
         start = i*max_batch_size
         end = (i+1)*max_batch_size
         this_train_batch = train_case[start:end]
-        this_lable_batch = lables[start:end]
+
+        action_list = actions[start:end]
 
         train_batch_list = []
         mask_batch_list = []
-        lable_batch_list = []
 
         if len(this_train_batch) <= 1:
             continue
-        max_length = len(list(this_train_batch[-1]))
+        max_length = max([len(x) for x in this_train_batch])
+        #max_length = len(list(this_train_batch[-1]))
 
-        neg_num = 0
-        pos_num = 0
         for i in range(len(this_train_batch)):
-            this_lable = list(this_lable_batch[i])
-            add = True
-            if this_lable[0] == 1: ## neg
-                if neg_num >= pos_num:
-                    ra = random.randint(0,neg_num-pos_num)
-                    if ra == 0:
-                        add = True
-                        neg_num += 1
-                    else:
-                        add = False
-            else:
-                pos_num += 1
-
-            if not add:
-                continue 
-
             this_train_cas = list(this_train_batch[i])
             add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
             train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+            mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
+
+            mask_batch_list.append(mask_in_batch)
             train_batch_list.append(train_case_in_batch)
 
-            mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
-            mask_batch_list.append(mask_in_batch)
+        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(action_list)
 
-            lable_in_batch = this_lable + [0]*(max_length - len(this_train_cas))
-            lable_batch_list.append(lable_in_batch)
 
-        if len(lable_batch_list) == 0:
-            continue
-
-        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
-
-def generate_input_case(doc_mention_arrays,doc_pair_arrays):
+def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 
     train_case = []
 
@@ -141,11 +125,12 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays):
         mention_array = doc_mention_arrays[i]
         this_train_case = []
 
-        ## add a Noun cluster
-        Noun_cluster_array = numpy.array([0.0]*len(mention_array))
-        this_input = numpy.append(mention_array,Noun_cluster_array)
-        this_input = numpy.append(this_input,numpy.array([0.0]*28))
-        this_train_case.append(this_input)
+        if not pretrain:
+            ## add a Noun cluster
+            Noun_cluster_array = numpy.array([0.0]*len(mention_array))
+            this_input = numpy.append(mention_array,Noun_cluster_array)
+            this_input = numpy.append(this_input,numpy.array([0.0]*28))
+            this_train_case.append(this_input)
 
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
@@ -168,18 +153,12 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
 
-    action_list = []
+    actions = []
 
-    train_list = []
-    mask_list = []
-    for train_batch_list, mask_batch_list in batch_generater(train_case):
-
-        train_list.append(train_batch_list)
-        mask_list.append(mask_batch_list)
+    for train_batch_list, mask_batch_list in batch_generater(train_case,shuffle=False):
 
         action_probabilities = list(network.predict_batch(train_batch_list,mask_batch_list)[0])
 
-        actions = []
         for action_probability in action_probabilities:
             action = sample_action(action_probability)
             actions.append(action)
@@ -192,35 +171,17 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
             cluster_info.append(should_cluster)
 
-        action_list.append(actions)
-
+        #action_list.append(actions)
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
-    reward_list = []
-    for i in range(len(train_list)):
-        reward_list.append([reward]*len(train_list[i]))
+    #reward_list = []
+    #for i in range(len(train_list)):
+    #    reward_list.append([reward]*len(train_list[i]))
 
-    return train_list,mask_list,action_list,reward_list
+    for train_batch_list, mask_batch_list, action_batch_list in batch_generater_shuffle(train_case,actions):
+        yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
 
-def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
-    cluster_info = []
-    new_cluster_num = 0
+    #return train_list,mask_list,action_list,reward_list
 
-    train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
-    gold_dict = {}
-    lable_in_gold = []
-    for chain in gold_chain:
-        for item in chain:
-            gold_dict[item] = chain
-    for i in range(len(train_case)):
-        lables = [0]*i
-        if gold_dict.has_key(i):
-            for j in gold_dict[i]:
-                if j < i and j >= 0:
-                    lables[j] = 1
-        lables = [1] + lables if sum(lables) == 0 else [0] + lables
-        lable_in_gold.append(lables)
-
-    return batch_generater_pretrain(train_case,lable_in_gold)
 
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     cluster_info = []
@@ -228,7 +189,7 @@ def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
 
-    for train_batch_list, mask_batch_list in batch_generater(train_case):
+    for train_batch_list, mask_batch_list in batch_generater(train_case,shuffle=False):
 
         action_probabilities = list(network.predict_batch(train_batch_list,mask_batch_list)[0])
 

@@ -634,4 +634,3 @@ def dropout_from_layer(layer, p=0.5):
     # int * float32 = float64 which pulls things off the gpu
     output = layer * T.cast(mask, theano.config.floatX)
     return output
-
