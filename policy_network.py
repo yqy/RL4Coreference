@@ -64,7 +64,7 @@ def batch_generater(train_case, max_batch_size = 128):
         train_batch_list = []
         mask_batch_list = []
 
-        if len(this_train_batch) <= 1:
+        if len(this_train_batch) < 1:
             continue
         max_length = len(list(this_train_batch[-1]))
 
@@ -93,10 +93,6 @@ def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
     index_list = range(total_num)
     numpy.random.shuffle(index_list)
 
-    #c = list(zip(train_case, actions))
-    #numpy.random.shuffle(c)
-    #train_case[:],actions[:] = zip(*c)
-
     for i in range(batch_num):
         start = i*max_batch_size
         end = (i+1)*max_batch_size
@@ -109,12 +105,11 @@ def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
         mask_batch_list = []
         action_batch_list = []
 
-        if len(this_train_batch) <= 1:
+        if len(this_index_batch) < 1:
             continue
         max_length = max([len(train_case[x]) for x in this_index_batch])
 
-        for i in range(len(this_index_batch)):
-            current_index = this_index_batch[i]
+        for current_index in this_index_batch:
 
             this_train_cas = list(train_case[current_index])
             add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
@@ -126,7 +121,7 @@ def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
             train_batch_list.append(train_case_in_batch)
             action_batch_list.append(actions[current_index])
 
-        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(action_list)
+        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(action_batch_list)
 
 
 def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
@@ -186,11 +181,9 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
             cluster_info.append(should_cluster)
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
-
     for train_batch_list, mask_batch_list, action_batch_list in batch_generater_shuffle(train_case,actions):
+        
         yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
-
-    #return train_list,mask_list,action_list,reward_list
 
 
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):

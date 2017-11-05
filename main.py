@@ -74,7 +74,8 @@ def main():
     cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
     save_f.close()
     print >> sys.stderr,"Begin test on DEV after pertraining"
-
+    
+    '''
     ## test performance after pretraining
     dev_docs_for_test = []
     for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
@@ -90,7 +91,7 @@ def main():
     print "##################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
-
+    '''
     ##train
     train4test = [] # add 5 items for testing the training performance
     add2train = True
@@ -107,7 +108,7 @@ def main():
                         add2train = False
 
             this_reward = 0.0
-            #train_list,mask_list,action_case,reward_list = policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
+
             for train_batch, mask_batch, action_batch, reward_batch in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
 
                 this_reward = reward_batch[0]
