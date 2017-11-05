@@ -37,8 +37,8 @@ def main():
 
     #network_model
     if os.path.isfile("./model/network_model."+args.language):
-        read_f = file('./model/network_model.'+args.language, 'rb')
-        #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        #read_f = file('./model/network_model.'+args.language, 'rb')
+        read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model."+args.language
     else:
@@ -58,7 +58,7 @@ def main():
     #pretrain
     times = 0
     last_cost = 1000000
-    for echo in range(20):
+    for echo in range(0):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
