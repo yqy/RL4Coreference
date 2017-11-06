@@ -58,13 +58,13 @@ def main():
     #pretrain
     times = 0
     last_cost = 1000000
-    for echo in range(0):
+    for echo in range(20):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
             for train_list,mask_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
-                cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.001)[0]
+                cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.002)[0]
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
@@ -75,7 +75,6 @@ def main():
     save_f.close()
     print >> sys.stderr,"Begin test on DEV after pertraining"
     
-    '''
     ## test performance after pretraining
     dev_docs_for_test = []
     for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
@@ -91,7 +90,6 @@ def main():
     print "##################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
-    '''
 
     ##train
     train4test = [] # add 5 items for testing the training performance
@@ -123,7 +121,7 @@ def main():
                 reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
                 norm_reward = numpy.array(reward_batch) - reward_b
 
-                cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.00002)[0]
+                cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.0001)[0]
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
