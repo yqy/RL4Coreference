@@ -13,7 +13,8 @@ import Mention
 import Reader
 import word2vec
 import DataGenerate
-import policy_network
+#import policy_network
+import policy_network_single as policy_network
 
 import cPickle
 sys.setrecursionlimit(1000000)

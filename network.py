@@ -64,9 +64,12 @@ class NetWork():
         y = T.iscalar('classification')
 
         l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
-        lmbda_l2 = 0.0001
+        lmbda_l2 = 0.000001
 
-        cost = (-Reward) * T.log(self.policy[y] + 1e-7) + lmbda_l2*l2_norm_squared
+        self.get_weight_sum = theano.function(inputs=[],outputs=[l2_norm_squared])
+
+        cost = (-Reward) * T.log(self.policy[y] + 1e-7)\
+                + lmbda_l2*l2_norm_squared
 
         grads = T.grad(cost, self.params)
         #grads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in grads]
@@ -83,8 +86,8 @@ class NetWork():
         pre_lr = T.scalar()
         lable = T.vector()
 
-        pre_cost = - T.sum(T.log(self.classification_results + 1e-7)*lable)\
-                    - T.sum(T.log(1-self.classification_results + 1e-7)*(1-lable))\
+        pre_cost = - T.sum(T.log(self.classification_results + 1e-7 )*lable)/(T.sum(lable)+1)\
+                    - T.sum(T.log(1-self.classification_results+ 1e-7 )*(1-lable))/(T.sum(1-lable)+1)\
                     + lmbda_l2*l2_norm_squared
 
         pregrads = T.grad(pre_cost, self.params)

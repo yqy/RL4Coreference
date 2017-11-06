@@ -59,17 +59,21 @@ def main():
 
     #pretrain
     times = 0
-    last_cost = 1000000
     for echo in range(20):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
+        num = 20
+        #print >> sys.stderr, network_model.get_weight_sum()
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            #num -= 1
+            #if num <= 0:
+            #    break
             #for train_list,mask_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
                 #cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.002)[0]
             for train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
-                print lable_list
-                cost_this_turn += network_model.pre_train_step(train_list,lable_list,0.002)[0]
+                #print lable_list
+                cost_this_turn += network_model.pre_train_step(train_list,lable_list,0.0001)[0]
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
