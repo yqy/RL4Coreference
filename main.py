@@ -110,7 +110,6 @@ def main():
             this_reward = 0.0
 
             for train_batch, mask_batch, action_batch, reward_batch in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
-
                 this_reward = reward_batch[0]
 
                 reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))

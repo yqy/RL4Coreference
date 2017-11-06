@@ -79,7 +79,7 @@ def batch_generater(train_case, max_batch_size = 128):
 
         yield numpy.array(train_batch_list),numpy.array(mask_batch_list)
 
-def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
+def batch_generater_shuffle(train_case, max_batch_size = 128):
 
     total_num = len(train_case)
 
@@ -103,7 +103,6 @@ def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
 
         train_batch_list = []
         mask_batch_list = []
-        action_batch_list = []
 
         if len(this_index_batch) < 1:
             continue
@@ -119,9 +118,8 @@ def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
 
             mask_batch_list.append(mask_in_batch)
             train_batch_list.append(train_case_in_batch)
-            action_batch_list.append(actions[current_index])
 
-        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(action_batch_list)
+        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),this_index_batch
 
 
 def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
@@ -157,32 +155,40 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     reward = 0.0
 
-    cluster_info = []
-    new_cluster_num = 0
-
     train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
 
-    actions = []
+    actions_dict = {}
 
-    for train_batch_list, mask_batch_list in batch_generater(train_case):
+    items_in_batch = []
+
+    start_time = timeit.default_timer()
+    for train_batch_list, mask_batch_list, index_batch_list in batch_generater_shuffle(train_case):
 
         action_probabilities = list(network.predict_batch(train_batch_list,mask_batch_list)[0])
-
-        for action_probability in action_probabilities:
+        action_batch_list = []
+        for action_probability, current_index in zip(action_probabilities,index_batch_list):
             action = sample_action(action_probability)
-            actions.append(action)
+            action_batch_list.append(action)
 
-            if (action-1) == -1: # -1 means a new cluster
-                should_cluster = new_cluster_num
-                new_cluster_num += 1
-            else:
-                should_cluster = cluster_info[action-1]
+            actions_dict[current_index] = action # save the action information
 
-            cluster_info.append(should_cluster)
+        items_in_batch.append((train_batch_list, mask_batch_list, action_batch_list))
+
+    cluster_info = []
+    new_cluster_num = 0
+    for i in sorted(actions_dict.keys()):
+        action = actions_dict[i]
+        if (action-1) == -1: # -1 means a new cluster
+            should_cluster = new_cluster_num
+            new_cluster_num += 1
+        else:
+            should_cluster = cluster_info[action-1]
+
+        cluster_info.append(should_cluster)
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
-    for train_batch_list, mask_batch_list, action_batch_list in batch_generater_shuffle(train_case,actions):
-        
+
+    for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:
         yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
 
 
