@@ -92,6 +92,7 @@ def main():
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
     '''
+
     ##train
     train4test = [] # add 5 items for testing the training performance
     add2train = True
