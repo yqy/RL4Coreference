@@ -57,11 +57,10 @@ def main():
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
 
-    '''
     #pretrain
     times = 0
     last_cost = 1000000
-    for echo in range(30):
+    for echo in range(20):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
@@ -95,7 +94,6 @@ def main():
     print "##################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
-    '''
 
     ##train
     train4test = [] # add 5 items for testing the training performance
@@ -110,7 +108,7 @@ def main():
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
             
             #trick_num += 1
-            #if trick_num < 1117:
+            #if trick_num < 80:
             #    continue
         
             if add2train:

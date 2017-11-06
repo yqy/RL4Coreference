@@ -56,7 +56,7 @@ class NetWork():
         self.predict = theano.function(
             inputs=[self.x_inpt],
             outputs=[self.policy],
-            allow_input_downcast=True,
+            #allow_input_downcast=True,
             on_unused_input='warn')
 
         lr = T.scalar()
@@ -66,7 +66,7 @@ class NetWork():
         l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
         lmbda_l2 = 0.0001
 
-        cost = (-Reward) * T.log(self.policy[y]) + lmbda_l2*l2_norm_squared
+        cost = (-Reward) * T.log(self.policy[y] + 1e-7) + lmbda_l2*l2_norm_squared
 
         grads = T.grad(cost, self.params)
         #grads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in grads]

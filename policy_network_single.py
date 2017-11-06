@@ -21,7 +21,8 @@ sys.setrecursionlimit(1000000)
 random.seed(args.random_seed)
 
 def sample_action(action_probability):
-    action = numpy.random.choice(numpy.arange(len(action_probability)),p=action_probability)
+    ac = action_probability/sum(action_probability)
+    action = numpy.random.choice(numpy.arange(len(ac)),p=ac)
     return action
 def choose_action(action_probability):
     ac_list = list(action_probability)
@@ -149,7 +150,7 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
             this_input = numpy.append(this_input,pair_features) 
             this_train_case.append(this_input)
 
-        this_train_case = numpy.array(this_train_case)
+        this_train_case = numpy.array(this_train_case,dtype = numpy.float32)
 
         train_case.append(this_train_case)
 
