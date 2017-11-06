@@ -54,6 +54,7 @@ def batch_generater(train_case, max_batch_size = 128):
     elif total_num > 1000:
         max_batch_size = 32
 
+    add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
     batch_num = (total_num/max_batch_size)+1
     
     for i in range(batch_num):
@@ -70,7 +71,6 @@ def batch_generater(train_case, max_batch_size = 128):
 
         for i in range(len(this_train_batch)):
             this_train_cas = list(this_train_batch[i])
-            add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
             train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
             mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
 
@@ -92,6 +92,7 @@ def batch_generater_shuffle(train_case, max_batch_size = 128):
 
     index_list = range(total_num)
     numpy.random.shuffle(index_list)
+    add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
 
     for i in range(batch_num):
         start = i*max_batch_size
@@ -111,7 +112,6 @@ def batch_generater_shuffle(train_case, max_batch_size = 128):
         for current_index in this_index_batch:
 
             this_train_cas = list(train_case[current_index])
-            add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
 
             train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
             mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
