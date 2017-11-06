@@ -29,6 +29,7 @@ random.seed(args.random_seed)
 def main():
 
     embedding_dir = args.embedding+args.language
+
     print >> sys.stderr,"Read Embedding from %s ..."%embedding_dir
     embedding_dimention = 50
     if args.language == "cn":
@@ -106,7 +107,7 @@ def main():
             #trick_num += 1
             #if trick_num < 1117:
             #    continue
-
+        
             if add2train:
                 if random.randint(1,200) == 100:
                     train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
