@@ -16,7 +16,7 @@ import DataGenerate
 import evaluation
 import policy_network
 import network
-import network_batch as network
+#import network_batch as network
 import pretrain
 
 import cPickle
@@ -64,8 +64,10 @@ def main():
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-            for train_list,mask_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
-                cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.002)[0]
+            #for train_list,mask_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+                #cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.002)[0]
+            for train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+                cost_this_turn += network_model.pre_train_step(train_list,lable_list,0.002)[0]
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn

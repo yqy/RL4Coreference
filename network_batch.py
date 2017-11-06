@@ -36,7 +36,6 @@ class NetWork():
         self.params = []
 
         self.x_inpt = T.tensor3("input_pair_embeddings")
-        self.x_inpt_single = T.matrix("input_pair_embeddings")
         self.x_mask = T.matrix("mask")
 
         w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer",special=True,ones=False) 

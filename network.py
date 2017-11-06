@@ -36,17 +36,17 @@ class NetWork():
 
         self.x_inpt = T.matrix("input_pair_embeddings")
 
-        w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer",ones=False) 
+        w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer",special=True,ones=False) 
         self.params += [w_h_1,b_h_1]
 
         self.hidden_layer_1 = activate(T.dot(self.x_inpt,w_h_1) + b_h_1)
 
-        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer",ones=False) 
+        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer",special=True,ones=False) 
         self.params += [w_h_2,b_h_2]
 
         self.hidden_layer_2 = activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2)
 
-        w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer",ones=False) 
+        w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer",special=True,ones=False) 
         self.params += [w_h_3,b_h_3]
 
         self.output_layer = activate(T.dot(self.hidden_layer_2,w_h_3) + b_h_3)
@@ -63,9 +63,15 @@ class NetWork():
         Reward = T.scalar("Reward")
         y = T.iscalar('classification')
 
-        cost = (-Reward) * T.log(self.policy[y])
+        l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
+        lmbda_l2 = 0.0001
 
-        updates = lasagne.updates.sgd(cost, self.params, lr)
+        cost = (-Reward) * T.log(self.policy[y]) + lmbda_l2*l2_norm_squared
+
+        grads = T.grad(cost, self.params)
+        #grads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in grads]
+        #updates = lasagne.updates.rmsprop(grads, self.params, learning_rate=0.0001)
+        updates = lasagne.updates.rmsprop(grads, self.params, learning_rate=lr)
 
         self.train_step = theano.function(
             inputs=[self.x_inpt,y,Reward,lr],
@@ -73,6 +79,33 @@ class NetWork():
             on_unused_input='warn',
             allow_input_downcast=True,
             updates=updates)
+
+        self.classification_results = sigmoid(self.output_layer.flatten())
+        pre_lr = T.scalar()
+        lable = T.vector()
+
+        pre_cost = -T.sum(T.log(self.classification_results + 1e-7)*lable)\
+ - T.sum(T.log(1-self.classification_results + 1e-7)*(1-lable))\
+ + lmbda_l2*l2_norm_squared
+
+        pregrads = T.grad(pre_cost, self.params)
+        #pregrads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in pregrads]
+        #pre_updates = lasagne.updates.rmsprop(pregrads, self.params, learning_rate=0.0001)
+        pre_updates = lasagne.updates.rmsprop(pregrads, self.params, learning_rate=pre_lr)
+
+        self.pre_train_step = theano.function(
+            inputs=[self.x_inpt,lable,pre_lr],
+            outputs=[pre_cost],
+            allow_input_downcast=True,
+            on_unused_input='warn',
+            updates=pre_updates)
+
+        self.pre_predict = theano.function(
+            inputs=[self.x_inpt,lable],
+            outputs=[self.classification_results],
+            allow_input_downcast=True,
+            on_unused_input='warn')
+
 
     def show_para(self):
         for para in self.params:
@@ -82,14 +115,21 @@ def main():
     r = NetWork(3,2)
 
     zp_x = [[2,3,4],[2,98,4]]
-    print list(r.predict(zp_x)[0])[0]
-    print r.predict(zp_x)[0][0]
-    print r.predict(zp_x)[0][1]
-    r.train_step(zp_x,0,0.2,5)
-    r.train_step(zp_x,0,0.2,5)
-    r.train_step(zp_x,0,0.2,5)
-    r.train_step(zp_x,1,1,5)
-    print r.predict(zp_x)[0]
+    print list(r.predict(zp_x)[0])
+    #print r.predict(zp_x)[0][0]
+    #print r.predict(zp_x)[0][1]
+    #r.train_step(zp_x,0,0.2,5)
+    #r.train_step(zp_x,0,0.2,5)
+    #r.train_step(zp_x,0,0.2,5)
+    #r.train_step(zp_x,1,1,5)
+    #print r.predict(zp_x)[0]
+    lable = [0,1]
+    pre_lr = 0.1
+    print r.pre_predict(zp_x,lable)
+    print r.pre_train_step(zp_x,lable,pre_lr)
+    print r.pre_train_step(zp_x,lable,pre_lr)
+    print r.pre_train_step(zp_x,lable,pre_lr)
+    print r.pre_predict(zp_x,lable)
 
 if __name__ == "__main__":
     main()
