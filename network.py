@@ -77,16 +77,15 @@ class NetWork():
             inputs=[self.x_inpt,y,Reward,lr],
             outputs=[cost],
             on_unused_input='warn',
-            allow_input_downcast=True,
             updates=updates)
 
         self.classification_results = sigmoid(self.output_layer.flatten())
         pre_lr = T.scalar()
         lable = T.vector()
 
-        pre_cost = -T.sum(T.log(self.classification_results + 1e-7)*lable)\
- - T.sum(T.log(1-self.classification_results + 1e-7)*(1-lable))\
- + lmbda_l2*l2_norm_squared
+        pre_cost = - T.sum(T.log(self.classification_results + 1e-7)*lable)\
+                    - T.sum(T.log(1-self.classification_results + 1e-7)*(1-lable))\
+                    + lmbda_l2*l2_norm_squared
 
         pregrads = T.grad(pre_cost, self.params)
         #pregrads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in pregrads]
@@ -96,14 +95,12 @@ class NetWork():
         self.pre_train_step = theano.function(
             inputs=[self.x_inpt,lable,pre_lr],
             outputs=[pre_cost],
-            allow_input_downcast=True,
             on_unused_input='warn',
             updates=pre_updates)
 
         self.pre_predict = theano.function(
             inputs=[self.x_inpt,lable],
             outputs=[self.classification_results],
-            allow_input_downcast=True,
             on_unused_input='warn')
 
 

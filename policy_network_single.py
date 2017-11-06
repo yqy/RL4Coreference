@@ -46,86 +46,6 @@ def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     return ev_document
 
 
-def batch_generater(train_case, max_batch_size = 128):
-
-    total_num = len(train_case)
-
-    if total_num >= 500 and total_num <= 1000:
-        max_batch_size = 64
-    elif total_num > 1000:
-        max_batch_size = 32
-
-    add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
-    batch_num = (total_num/max_batch_size)+1
-    
-    for i in range(batch_num):
-        start = i*max_batch_size
-        end = (i+1)*max_batch_size
-        this_train_batch = train_case[start:end]
-
-        train_batch_list = []
-        mask_batch_list = []
-
-        if len(this_train_batch) < 1:
-            continue
-        max_length = len(list(this_train_batch[-1]))
-
-        for i in range(len(this_train_batch)):
-            this_train_cas = list(this_train_batch[i])
-            train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
-            mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
-
-            mask_batch_list.append(mask_in_batch)
-            train_batch_list.append(train_case_in_batch)
-
-        yield numpy.array(train_batch_list),numpy.array(mask_batch_list)
-
-def batch_generater_shuffle(train_case):
-
-    total_num = len(train_case)
-
-    index_list = range(total_num)
-    numpy.random.shuffle(index_list)
-    #add_zeros = numpy.array([[0.0]*(1374 if args.language=="en" else 1738)])
-
-    for i in range(batch_num):
-        start = i*max_batch_size
-        end = (i+1)*max_batch_size
-        this_index_batch = index_list[start:end]
-        #this_train_batch = train_case[start:end]
-
-        #action_list = actions[start:end]
-
-        train_batch_list = []
-        mask_batch_list = []
-
-        if len(this_index_batch) < 1:
-            continue
-        max_length = max([len(train_case[x]) for x in this_index_batch])
-
-        for current_index in this_index_batch:
-
-            #this_train_cas = list(train_case[current_index])
-            this_train_cas = train_case[current_index]
-
-            #train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
-
-            ## lib.pad(x,[(a,b),(c,d)],mode='constant') means add several "0" before and after the first dimention of x in a and b times.
-            ## for example, a=2,b=3 means add 2 zeros before x and 3 after x in the first dimention(row)
-            ## c,d means the second dimention
-
-            train_case_in_batch = numpy.lib.pad(this_train_cas,[(0,(max_length - len(this_train_cas)) ), (0,0)], mode='constant')
-
-            mask_in_batch = numpy.append(numpy.ones(len(this_train_cas)),numpy.zeros((max_length - len(this_train_cas))))
-            #mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
-
-            mask_batch_list.append(mask_in_batch)
-            train_batch_list.append(train_case_in_batch)
-
-        #yield numpy.array(train_batch_list),numpy.array(mask_batch_list),this_index_batch
-        yield train_batch_list,mask_batch_list,this_index_batch
-
-
 def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 
     train_case = []
@@ -196,7 +116,6 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     #for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:
     #    yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
-
 
 def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     cluster_info = []
