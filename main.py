@@ -14,7 +14,8 @@ import Reader
 import word2vec
 import DataGenerate
 import evaluation
-import policy_network
+#import policy_network
+import policy_network_single as policy_network
 import network
 #import network_batch as network
 import pretrain
@@ -56,6 +57,7 @@ def main():
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
 
+    '''
     #pretrain
     times = 0
     last_cost = 1000000
@@ -93,6 +95,7 @@ def main():
     print "##################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
+    '''
 
     ##train
     train4test = [] # add 5 items for testing the training performance
@@ -118,13 +121,15 @@ def main():
 
             this_reward = 0.0
 
-            for train_batch, mask_batch, action_batch, reward_batch in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
-                this_reward = reward_batch[0]
+            #for train_batch, mask_batch, action_batch, reward_batch in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+            for train, action, reward in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+                #this_reward = reward_batch
 
-                reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
-                norm_reward = numpy.array(reward_batch) - reward_b
+                #reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
+                #norm_reward = numpy.array(reward_batch) - reward_b
 
-                cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.0001)[0]
+                #cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.0001)[0]
+                cost_this_turn += network_model.train_step(train,action,reward,0.0001)[0]
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
