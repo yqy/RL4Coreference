@@ -115,6 +115,11 @@ def batch_generater_shuffle(train_case, max_batch_size = 128):
             this_train_cas = train_case[current_index]
 
             #train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+
+            ## lib.pad(x,[(a,b),(c,d)],mode='constant') means add several "0" before and after the first dimention of x in a and b times.
+            ## for example, a=2,b=3 means add 2 zeros before x and 3 after x in the first dimention(row)
+            ## c,d means the second dimention
+
             train_case_in_batch = numpy.lib.pad(this_train_cas,[(0,(max_length - len(this_train_cas)) ), (0,0)], mode='constant')
 
             mask_in_batch = numpy.append(numpy.ones(len(this_train_cas)),numpy.zeros((max_length - len(this_train_cas))))
