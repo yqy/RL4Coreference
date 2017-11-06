@@ -96,6 +96,30 @@ def batch_generater_pretrain(train_case, gold_dict, max_batch_size = 64):
 
         yield numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
 
+def generater_pretrain(train_case, gold_dict):
+
+    total_num = len(train_case)
+
+    numpy.random.shuffle(train_case)
+
+    for this_train in train_case:
+        length_of_this_train_case = len(this_train)
+        index_in_chain = length_of_this_train_case
+        lables = [0]*length_of_this_train_case
+
+
+        if gold_dict.has_key(index_in_chain):
+            for j in gold_dict[index_in_chain]:
+                if j < index_in_chain and j >= 0:
+                    lables[j] = 1
+        
+        if sum(lables) == 0:
+            continue
+
+        yield this_train,lables
+        #numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
+
+
 def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
     cluster_info = []
     new_cluster_num = 0
@@ -106,17 +130,7 @@ def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],netw
     for chain in gold_chain:
         for item in chain:
             gold_dict[item] = chain
-    '''
-    for i in range(len(train_case)):
-        print i,len(train_case[i])
-        lables = [0]*i
-        if gold_dict.has_key(i):
-            for j in gold_dict[i]:
-                if j < i and j >= 0:
-                    lables[j] = 1
-        #lables = [1] + lables if sum(lables) == 0 else [0] + lables
-        lable_in_gold.append(lables)
-    return batch_generater_pretrain(train_case,lable_in_gold)
-    '''
-    return batch_generater_pretrain(train_case[1:],gold_dict)
+
+    #return batch_generater_pretrain(train_case[1:],gold_dict)
+    return generater_pretrain(train_case[1:],gold_dict)
 ## train_case[0] = Null. because the first mention has no antecedents
