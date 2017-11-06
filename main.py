@@ -37,8 +37,8 @@ def main():
 
     #network_model
     if os.path.isfile("./model/network_model."+args.language):
-        #read_f = file('./model/network_model.'+args.language, 'rb')
-        read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        read_f = file('./model/network_model.'+args.language, 'rb')
+        #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model."+args.language
     else:
@@ -101,7 +101,14 @@ def main():
         start_time = timeit.default_timer()
         reward_baseline = []
         cost_this_turn = 0.0
+
+        trick_num = 0
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            
+            #trick_num += 1
+            #if trick_num < 1117:
+            #    continue
+
             if add2train:
                 if random.randint(1,200) == 100:
                     train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))

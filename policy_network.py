@@ -92,7 +92,7 @@ def batch_generater_shuffle(train_case, max_batch_size = 128):
 
     index_list = range(total_num)
     numpy.random.shuffle(index_list)
-    add_zeros = [[0.0]*(1374 if args.language=="en" else 1738)]
+    #add_zeros = numpy.array([[0.0]*(1374 if args.language=="en" else 1738)])
 
     for i in range(batch_num):
         start = i*max_batch_size
@@ -111,15 +111,20 @@ def batch_generater_shuffle(train_case, max_batch_size = 128):
 
         for current_index in this_index_batch:
 
-            this_train_cas = list(train_case[current_index])
+            #this_train_cas = list(train_case[current_index])
+            this_train_cas = train_case[current_index]
 
-            train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
-            mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
+            #train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+            train_case_in_batch = numpy.lib.pad(this_train_cas,[(0,(max_length - len(this_train_cas)) ), (0,0)], mode='constant')
+
+            mask_in_batch = numpy.append(numpy.ones(len(this_train_cas)),numpy.zeros((max_length - len(this_train_cas))))
+            #mask_in_batch = [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
 
             mask_batch_list.append(mask_in_batch)
             train_batch_list.append(train_case_in_batch)
 
-        yield numpy.array(train_batch_list),numpy.array(mask_batch_list),this_index_batch
+        #yield numpy.array(train_batch_list),numpy.array(mask_batch_list),this_index_batch
+        yield train_batch_list,mask_batch_list,this_index_batch
 
 
 def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
@@ -161,9 +166,16 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     items_in_batch = []
 
-    start_time = timeit.default_timer()
-    for train_batch_list, mask_batch_list, index_batch_list in batch_generater_shuffle(train_case):
+    st = timeit.default_timer()
 
+    start_time = timeit.default_timer()
+    #print len(train_case)
+    for train_batch_list, mask_batch_list, index_batch_list in batch_generater_shuffle(train_case):
+        
+        end_time = timeit.default_timer()
+        #print "Generate shuffle instance use", end_time-start_time
+        
+        start_time = timeit.default_timer()
         action_probabilities = list(network.predict_batch(train_batch_list,mask_batch_list)[0])
         action_batch_list = []
         for action_probability, current_index in zip(action_probabilities,index_batch_list):
@@ -171,8 +183,14 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
             action_batch_list.append(action)
 
             actions_dict[current_index] = action # save the action information
+        end_time = timeit.default_timer()
+        #print "Generate actions use", end_time-start_time
 
         items_in_batch.append((train_batch_list, mask_batch_list, action_batch_list))
+
+        start_time = timeit.default_timer()
+    
+    #print "total use ",timeit.default_timer()-st
 
     cluster_info = []
     new_cluster_num = 0
