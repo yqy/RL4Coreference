@@ -194,7 +194,7 @@ def main():
         print >> sys.stderr, "TEST Use %.3f seconds"%(end_time-start_time)
         sys.stdout.flush()
 
-        save_f = file('./model/nets/ network_model.%s.%d'%(args.language,echo), 'wb')
+        save_f = file('./model/nets/network_model.%s.%d'%(args.language,echo), 'wb')
         cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
 
