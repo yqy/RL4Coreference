@@ -126,7 +126,6 @@ def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     for tc in train_case:
         action_probability = list(network.predict(tc)[0])
         action = sample_action(action_probability)
-        actions.append(action)
 
         if (action-1) == -1: # -1 means a new cluster
             should_cluster = new_cluster_num
