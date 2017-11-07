@@ -73,7 +73,7 @@ def main():
                 #cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.002)[0]
             for train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
                 #print lable_list
-                cost_this_turn += network_model.pre_train_step(train_list,lable_list,0.002)[0]
+                cost_this_turn += network_model.pre_train_step(train_list,lable_list,0.0003)[0]
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn

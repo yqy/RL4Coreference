@@ -70,7 +70,7 @@ class NetWork():
         y = T.iscalar('classification')
 
         l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
-        lmbda_l2 = 0.000001
+        lmbda_l2 = 0.0000001
 
         self.get_weight_sum = theano.function(inputs=[],outputs=[l2_norm_squared])
 
