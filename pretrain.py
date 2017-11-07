@@ -103,20 +103,22 @@ def generater_pretrain(train_case, gold_dict):
 
     numpy.random.shuffle(train_case)
 
-    for this_train in train_case:
+    for single_mention_array,this_train in train_case:
+        if len(this_train) == 0:
+            continue
         length_of_this_train_case = len(this_train)
         index_in_chain = length_of_this_train_case
-        lables = [0]*length_of_this_train_case
+        lables = [0]*(length_of_this_train_case+1)
 
         if gold_dict.has_key(index_in_chain):
             for j in gold_dict[index_in_chain]:
-                if j < index_in_chain and j >= 0:
-                    lables[j] = 1
-        
-        if sum(lables) == 0:
-            continue
+                if (j+1) < index_in_chain and j >= 0:
+                    lables[j+1] = 1
 
-        yield this_train,lables
+        if sum(lables) == 0:
+            lables[0] = 1
+
+        yield single_mention_array,this_train,lables
         #numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
 
 
@@ -132,5 +134,5 @@ def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],netw
             gold_dict[item] = chain
 
     #return batch_generater_pretrain(train_case[1:],gold_dict)
-    return generater_pretrain(train_case[1:],gold_dict)
+    return generater_pretrain(train_case,gold_dict)
     ## train_case[0] = Null. because the first mention has no antecedents

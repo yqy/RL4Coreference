@@ -21,7 +21,7 @@ sys.setrecursionlimit(1000000)
 random.seed(args.random_seed)
 
 def sample_action(action_probability):
-    ac = action_probability/sum(action_probability)
+    ac = list(action_probability/action_probability.sum())
     action = numpy.random.choice(numpy.arange(len(ac)),p=ac)
     return action
 def choose_action(action_probability):
@@ -55,13 +55,15 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
     for i in range(mentions_num):
         mention_array = doc_mention_arrays[i]
         this_train_case = []
-
+            
+        '''
         if not pretrain:
             ## add a Noun cluster
             Noun_cluster_array = numpy.array([0.0]*len(mention_array))
             this_input = numpy.append(mention_array,Noun_cluster_array)
             this_input = numpy.append(this_input,numpy.array([0.0]*28))
             this_train_case.append(this_input)
+        '''
 
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
@@ -72,7 +74,9 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 
         this_train_case = numpy.array(this_train_case,dtype = numpy.float32)
 
-        train_case.append(this_train_case)
+        mention_array_float = numpy.array([mention_array],dtype = numpy.float32)
+
+        train_case.append((mention_array_float,this_train_case))
 
     return train_case
 
@@ -93,8 +97,12 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     cluster_info = []
     new_cluster_num = 0
     actions = []
-    for tc in train_case:
-        action_probability = list(network.predict(tc)[0])
+    for single,tc in train_case:
+        if len(tc) == 0:
+            action_probability = numpy.array([1])
+        else:
+            action_probability = network.predict(single,tc)[0]
+
         action = sample_action(action_probability)
         actions.append(action)
 
@@ -109,10 +117,12 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
 
     indexs = range(len(actions))
-    numpy.random.shuffle(indexs)
+
+    numpy.random.shuffle(indexs[1:]) ## for the first mention, it has no mention-pair information, thus should not trained
 
     for i in indexs:
-        yield train_case[i],actions[i],reward
+        single,tc = train_case[i]
+        yield single, tc, actions[i], reward
 
     #for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:
     #    yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
@@ -123,9 +133,12 @@ def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
 
-    for tc in train_case:
-        action_probability = list(network.predict(tc)[0])
-        action = sample_action(action_probability)
+    for single,tc in train_case:
+        if len(tc) == 0:
+            action_probability = [1]
+        else:
+            action_probability = list(network.predict(single,tc)[0])
+        action = choose_action(action_probability)
 
         if (action-1) == -1: # -1 means a new cluster
             should_cluster = new_cluster_num
