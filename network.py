@@ -41,10 +41,16 @@ class NetWork():
 
         self.hidden_layer_1 = activate(T.dot(self.x_inpt,w_h_1) + b_h_1)
 
-        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer",special=True,ones=False) 
+
+        w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer_1",special=True,ones=False) 
         self.params += [w_h_2,b_h_2]
 
-        self.hidden_layer_2 = activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2)
+        self.hidden_layer_2_ = activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2)
+
+        w_h_2_,b_h_2_ = init_weight(n_hidden/2,n_hidden/2,pre="hidden_layer_2",special=True,ones=False) 
+        self.params += [w_h_2_,b_h_2_]
+
+        self.hidden_layer_2 = activate(T.dot(self.hidden_layer_2_,w_h_2_) + b_h_2_)
 
         w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer",special=True,ones=False) 
         self.params += [w_h_3,b_h_3]

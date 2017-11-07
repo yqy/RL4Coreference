@@ -108,7 +108,6 @@ def generater_pretrain(train_case, gold_dict):
         index_in_chain = length_of_this_train_case
         lables = [0]*length_of_this_train_case
 
-
         if gold_dict.has_key(index_in_chain):
             for j in gold_dict[index_in_chain]:
                 if j < index_in_chain and j >= 0:
@@ -134,4 +133,4 @@ def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],netw
 
     #return batch_generater_pretrain(train_case[1:],gold_dict)
     return generater_pretrain(train_case[1:],gold_dict)
-## train_case[0] = Null. because the first mention has no antecedents
+    ## train_case[0] = Null. because the first mention has no antecedents
