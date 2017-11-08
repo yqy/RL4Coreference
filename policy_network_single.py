@@ -21,7 +21,7 @@ sys.setrecursionlimit(1000000)
 random.seed(args.random_seed)
 
 def sample_action(action_probability):
-    ac = list(action_probability/action_probability.sum())
+    ac = action_probability/action_probability.sum()
     action = numpy.random.choice(numpy.arange(len(ac)),p=ac)
     return action
 def choose_action(action_probability):
@@ -118,10 +118,12 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
 
     indexs = range(len(actions))
 
-    numpy.random.shuffle(indexs[1:]) ## for the first mention, it has no mention-pair information, thus should not trained
+    numpy.random.shuffle(indexs) ## for the first mention, it has no mention-pair information, thus should not trained
 
     for i in indexs:
         single,tc = train_case[i]
+        if len(tc) == 0:
+            continue
         yield single, tc, actions[i], reward
 
     #for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:

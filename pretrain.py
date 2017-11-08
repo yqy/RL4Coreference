@@ -116,12 +116,13 @@ def generater_pretrain(train_case, gold_dict):
             for j in gold_dict[index_in_chain]:
                 if (j+1) < index_in_chain and j >= 0:
                     lables[j+1] = 1
-        
+                
         add = True
 
         if sum(lables) == 0:
             lables[0] = 1
 
+        '''
             if neg_num >= pos_num:
                 ra = random.randint(0,neg_num-pos_num)
                 if ra == 0:
@@ -134,6 +135,7 @@ def generater_pretrain(train_case, gold_dict):
 
         if not add:
             continue 
+        '''
 
         yield single_mention_array,this_train,lables
         #numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)

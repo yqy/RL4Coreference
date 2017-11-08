@@ -29,6 +29,7 @@ class NetWork():
         ## pair_feature = 28
 
         activate=ReLU
+        #activate=tanh
 
         dropout_prob = T.fscalar("probability of dropout")
 
@@ -112,7 +113,9 @@ class NetWork():
             on_unused_input='warn',
             updates=updates)
 
-        self.classification_results = sigmoid(self.output_layer_all)
+        #self.classification_results = sigmoid(self.output_layer_all)
+        self.classification_results = self.policy
+
         pre_lr = T.fscalar()
         lable = T.ivector()
 
@@ -157,14 +160,14 @@ def main():
     #print r.predict(zp_x)[0]
 
     lable = [0,1,0]
-    pre_lr = 0.5
+    pre_lr = 5
     print r.pre_predict(x_sinlge,zp_x,lable)
-    r.show_para()
+    #r.show_para()
     print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr)
     print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr)
     print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr)
     print r.pre_predict(x_sinlge,zp_x,lable)
-    r.show_para()
+    #r.show_para()
 
 if __name__ == "__main__":
     main()

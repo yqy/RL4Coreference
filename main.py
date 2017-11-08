@@ -134,6 +134,7 @@ def main():
                 #norm_reward = numpy.array(reward_batch) - reward_b
 
                 #cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.0001)[0]
+                print len(train)
                 cost_this_turn += network_model.train_step(single,train,action,reward,0.0001)[0]
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
