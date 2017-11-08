@@ -103,6 +103,8 @@ def generater_pretrain(train_case, gold_dict):
 
     numpy.random.shuffle(train_case)
 
+    neg_num = 0
+    pos_num = 0
     for single_mention_array,this_train in train_case:
         if len(this_train) == 0:
             continue
@@ -114,9 +116,24 @@ def generater_pretrain(train_case, gold_dict):
             for j in gold_dict[index_in_chain]:
                 if (j+1) < index_in_chain and j >= 0:
                     lables[j+1] = 1
+        
+        add = True
 
         if sum(lables) == 0:
             lables[0] = 1
+
+            if neg_num >= pos_num:
+                ra = random.randint(0,neg_num-pos_num)
+                if ra == 0:
+                    add = True
+                    neg_num += 1
+                else:
+                    add = False
+        else:
+            pos_num += 1
+
+        if not add:
+            continue 
 
         yield single_mention_array,this_train,lables
         #numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
