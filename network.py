@@ -55,7 +55,7 @@ class NetWork():
         w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer_",special=True,ones=False) 
         self.params += [w_h_3,b_h_3]
 
-        self.output_layer = activate(T.dot(self.hidden_layer_2,w_h_3) + b_h_3).flatten()
+        self.output_layer = (T.dot(self.hidden_layer_2,w_h_3) + b_h_3).flatten()
 
         ## for single
         self.x_inpt_single = T.fmatrix("input_single_embeddings")
@@ -78,7 +78,7 @@ class NetWork():
         w_h_3_single,b_h_3_single = init_weight(n_hidden/2,1,pre="output_single_layer_",special=True,ones=False) 
         self.params += [w_h_3_single,b_h_3_single]
 
-        self.output_layer_single = activate(T.dot(self.hidden_layer_2_single,w_h_3_single) + b_h_3_single).flatten()
+        self.output_layer_single = (T.dot(self.hidden_layer_2_single,w_h_3_single) + b_h_3_single).flatten()
 
         self.output_layer_all = T.concatenate((self.output_layer_single,self.output_layer))
 
@@ -119,8 +119,8 @@ class NetWork():
         pre_lr = T.fscalar()
         lable = T.ivector()
 
-        pre_cost = - T.sum(T.log(self.classification_results + 1e-7 )*lable)/(T.sum(lable))\
-                    - T.sum(T.log(1-self.classification_results+ 1e-7 )*(1-lable))/(T.sum(1-lable))\
+        pre_cost = - T.sum(T.log(self.classification_results + 1e-7 )*lable)/(T.sum(lable)+1)\
+                    - T.sum(T.log(1-self.classification_results+ 1e-7 )*(1-lable))/(T.sum(1-lable)+1)\
                     + lmbda_l2*l2_norm_squared
 
         pregrads = T.grad(pre_cost, self.params)
