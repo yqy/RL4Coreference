@@ -82,7 +82,7 @@ def main():
         print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
 
     save_f = file('./model/network_model_pretrain.'+args.language, 'wb')
-    cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+    #cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
     save_f.close()
     print >> sys.stderr,"Begin test on DEV after pertraining"
     
@@ -134,7 +134,6 @@ def main():
                 #norm_reward = numpy.array(reward_batch) - reward_b
 
                 #cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.0001)[0]
-                print len(train)
                 cost_this_turn += network_model.train_step(single,train,action,reward,0.0001)[0]
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
@@ -159,6 +158,7 @@ def main():
         cp,cr,cf = evaluation.evaluate_documents(train_docs_for_test,evaluation.ceafe)
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
         print
+
         ## dev
         dev_docs_for_test = []
         start_time = timeit.default_timer()
