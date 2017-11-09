@@ -60,17 +60,23 @@ def main():
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
 
+    most_time = 10
+
     #pretrain
-    times = 0
-    for echo in range(20):
+    for echo in range(10):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
+        num = most_time
         #print >> sys.stderr, network_model.get_weight_sum()
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            num -= 1
+            if num <= 0:
+                break
             for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0003)[0]
 
+        print network_model.get_weight_sum()
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
         print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
@@ -80,10 +86,34 @@ def main():
     save_f.close()
     print >> sys.stderr,"Begin test on DEV after pertraining"
     
-    ## test performance after pretraining
+    ## test performance on dev after pretraining
     dev_docs_for_test = []
-    num = 0
+    num = most_time
+    #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+    for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        num -= 1
+        if num <= 0:
+            break
+        ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+        dev_docs_for_test.append(ev_doc)
+    print "Performance on TRAIN after PreTRAINING"
+    mp,mr,mf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.muc)
+    print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
+    bp,br,bf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.b_cubed)
+    print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
+    cp,cr,cf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.ceafe)
+    print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+    print "##################################################" 
+    sys.stdout.flush()
+    print >> sys.stderr,"Pre Train done"
+
+    ## test performance on dev after pretraining
+    dev_docs_for_test = []
+    num = most_time
     for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+        num -= 1
+        if num <= 0:
+            break
         ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
         dev_docs_for_test.append(ev_doc)
     print "Performance on DEV after PreTRAINING"
@@ -96,6 +126,9 @@ def main():
     print "##################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
+    return
+
+
 
     ##train
     train4test = [] # add 5 items for testing the training performance
@@ -106,7 +139,12 @@ def main():
         reward_baseline = []
         cost_this_turn = 0.0
 
+        trick_num = 0
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            
+            #trick_num += 1
+            #if trick_num < 80:
+            #    continue
         
             if add2train:
                 if random.randint(1,200) == 100:
@@ -116,10 +154,14 @@ def main():
 
             this_reward = 0.0
 
+            #for train_batch, mask_batch, action_batch, reward_batch in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
             for single, train, action, reward in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+                #this_reward = reward_batch
+
                 #reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
                 #norm_reward = numpy.array(reward_batch) - reward_b
 
+                #cost_this_turn += network_model.train_step(train_batch,mask_batch,action_batch,norm_reward,0.0001)[0]
                 cost_this_turn += network_model.train_step(single,train,action,reward,0.0001)[0]
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
