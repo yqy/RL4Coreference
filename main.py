@@ -69,26 +69,32 @@ def main():
         num = 20
         #print >> sys.stderr, network_model.get_weight_sum()
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-            #num -= 1
-            #if num <= 0:
-            #    break
+            num -= 1
+            if num <= 0:
+                break
             #for train_list,mask_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
                 #cost_this_turn += network_model.pre_train_step(train_list,mask_list,lable_list,0.002)[0]
             for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0003)[0]
+            print network_model.get_weight_sum()
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
         print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
 
     save_f = file('./model/network_model_pretrain.'+args.language, 'wb')
-    #cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+    cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
     save_f.close()
     print >> sys.stderr,"Begin test on DEV after pertraining"
     
     ## test performance after pretraining
     dev_docs_for_test = []
-    for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+    num = 0
+    #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+    for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        num += 1
+        if num >= 20:
+            break
         ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
         dev_docs_for_test.append(ev_doc)
     print "Performance on DEV after PreTRAINING"
@@ -101,6 +107,7 @@ def main():
     print "##################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
+    return
 
     ##train
     train4test = [] # add 5 items for testing the training performance

@@ -101,7 +101,7 @@ def generater_pretrain(train_case, gold_dict):
 
     total_num = len(train_case)
 
-    numpy.random.shuffle(train_case)
+    #numpy.random.shuffle(train_case)
 
     neg_num = 0
     pos_num = 0
@@ -119,6 +119,7 @@ def generater_pretrain(train_case, gold_dict):
                 
         add = True
 
+        '''
         if sum(lables) == 0:
             lables[0] = 1
             
@@ -128,6 +129,8 @@ def generater_pretrain(train_case, gold_dict):
                 neg_num += 1
         else:
             neg_num -= 1
+        '''
+
         '''
             if neg_num >= pos_num:
                 ra = random.randint(0,neg_num-pos_num)
