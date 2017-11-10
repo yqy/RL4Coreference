@@ -32,8 +32,8 @@ def read_from_file(fil,goldf,language):
         if not line:break
         i += 1
 
-        if i >= 5:
-            break 
+        #if i >= 5:
+        #    break 
 
         start_time = timeit.default_timer()
         line = line.strip()
@@ -255,6 +255,12 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays):
     return train_case
 
 def case_generater(docs,typ,w2v):
+    for mention_arrays, pair_arrays, gold_chain in array_generater(docs,typ,w2v):
+        train_case = generate_input_case(mention_arrays,pair_arrays)
+        yield train_case,gold_chain
+
+
+def case_generater_save(docs,typ,w2v):
 
     if os.path.isfile("./model/case_input_%s."%typ+args.language):
         print >> sys.stderr,"Read data from ./model/case_input_%s."%typ+args.language
@@ -332,8 +338,8 @@ def array_generater(docs,typ,w2v):
     
         for doc in docs:
             mention_arrays = []
-            pair_arrays = []
-            #pair_arrays = {}
+            #pair_arrays = []
+            pair_arrays = {}
 
     
             ## feature and embedding for each Mention
@@ -351,7 +357,8 @@ def array_generater(docs,typ,w2v):
 
             cPickle.dump((mention_arrays,pair_arrays,doc.gold_chain), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
 
-            yield numpy.array(mention_arrays),numpy.array(pair_arrays),doc.gold_chain
+            #yield numpy.array(mention_arrays),numpy.array(pair_arrays),doc.gold_chain
+            yield numpy.array(mention_arrays),pair_arrays,doc.gold_chain
    
         cPickle.dump((ENDTAG,None,None), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()

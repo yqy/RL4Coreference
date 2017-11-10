@@ -62,7 +62,7 @@ def main():
 
     #pretrain
     times = 0
-    for echo in range(0):
+    for echo in range(20):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
@@ -105,7 +105,7 @@ def main():
     train4test = [] # add 5 items for testing the training performance
     add2train = True
 
-    for echo in range(0):
+    for echo in range(20):
         start_time = timeit.default_timer()
         reward_baseline = []
         cost_this_turn = 0.0
