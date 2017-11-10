@@ -95,17 +95,19 @@ class NetWork():
         y = T.iscalar('classification')
 
         l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
-        lmbda_l2 = 0.000001
+        lmbda_l2 = 0.0000003
 
         self.get_weight_sum = theano.function(inputs=[],outputs=[l2_norm_squared])
 
-        cost = (-Reward) * T.log(self.policy[y] + 1e-7)\
+        cost = (-Reward) * T.log(self.policy[y] + 1e-6)\
                 + lmbda_l2*l2_norm_squared
 
         grads = T.grad(cost, self.params)
         #grads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in grads]
         #updates = lasagne.updates.rmsprop(grads, self.params, learning_rate=0.0001)
-        updates = lasagne.updates.rmsprop(grads, self.params, learning_rate=lr)
+        clip_grad = 5.0
+        cgrads = [T.clip(g,-clip_grad, clip_grad) for g in grads]
+        updates = lasagne.updates.rmsprop(cgrads, self.params, learning_rate=lr)
 
         self.train_step = theano.function(
             inputs=[self.x_inpt_single,self.x_inpt,y,Reward,lr],
@@ -119,15 +121,21 @@ class NetWork():
         pre_lr = T.fscalar()
         lable = T.ivector()
 
-        pre_cost = - T.sum(T.log(self.classification_results + 1e-7 )*lable)/(T.sum(lable)+1)\
-                    - T.sum(T.log(1-self.classification_results+ 1e-7 )*(1-lable))/(T.sum(1-lable)+1)\
+        pre_cost = (- T.sum(T.log(self.classification_results + 1e-6 )*lable)\
+                    - T.sum(T.log(1-self.classification_results+ 1e-6 )*(1-lable)))/(T.sum(lable) + T.sum(1-lable))\
                     + lmbda_l2*l2_norm_squared
+        #pre_cost = - T.sum(T.log(self.classification_results + 1e-7 )*lable)/(T.sum(lable)+1)\
+        #            - T.sum(T.log(1-self.classification_results+ 1e-7 )*(1-lable))/(T.sum(1-lable)+1)\
+        #            + lmbda_l2*l2_norm_squared
 
         pregrads = T.grad(pre_cost, self.params)
-        #max_norm = 1.0
+        #max_norm = 5.0
         #pregrads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in pregrads]
+        clip_grad = 5.0
+        pre_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in pregrads]
+
         #pre_updates = lasagne.updates.rmsprop(pregrads, self.params, learning_rate=0.0001)
-        pre_updates = lasagne.updates.rmsprop(pregrads, self.params, learning_rate=pre_lr)
+        pre_updates = lasagne.updates.rmsprop(pre_cgrads, self.params, learning_rate=pre_lr)
 
         self.pre_train_step = theano.function(
             inputs=[self.x_inpt_single,self.x_inpt,lable,pre_lr],

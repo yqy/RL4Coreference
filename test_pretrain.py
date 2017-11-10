@@ -60,7 +60,8 @@ def main():
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
 
-    most_time = 10
+    most_time = 100
+    most_time_test = 50
 
     #pretrain
     for echo in range(10):
@@ -74,8 +75,13 @@ def main():
             if num <= 0:
                 break
             for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+                #print single_mention_array
                 cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0003)[0]
 
+        for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+            ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+            break
+ 
         print network_model.get_weight_sum()
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
@@ -88,7 +94,7 @@ def main():
     
     ## test performance on dev after pretraining
     dev_docs_for_test = []
-    num = most_time
+    num = most_time_test
     #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
     for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
         num -= 1
@@ -109,7 +115,7 @@ def main():
 
     ## test performance on dev after pretraining
     dev_docs_for_test = []
-    num = most_time
+    num = most_time_test
     for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
         num -= 1
         if num <= 0:
