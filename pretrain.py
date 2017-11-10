@@ -150,11 +150,12 @@ def generater_pretrain(train_case, gold_dict):
         #numpy.array(train_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
 
 
-def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+#def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+def generate_pretrain_case(train_case,gold_chain=[],network=None):
     cluster_info = []
     new_cluster_num = 0
 
-    train_case = policy_network.generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=True)
+    #train_case = policy_network.generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=True)
     gold_dict = {}
     lable_in_gold = []
     for chain in gold_chain:

@@ -32,8 +32,8 @@ def read_from_file(fil,goldf,language):
         if not line:break
         i += 1
 
-        #if i >= 5:
-        #    break 
+        if i >= 5:
+            break 
 
         start_time = timeit.default_timer()
         line = line.strip()
@@ -225,8 +225,87 @@ def get_pair_embedding(i,j,doc):
     mention_distance = max(mention_i.mention_num,mention_j.mention_num) - min(mention_i.mention_num,mention_j.mention_num)
     feature_array += get_binary_by_num(sentence_distance)
 
-    feature_array = numpy.array(feature_array) # dimention=28
+    feature_array = numpy.array(feature_array,dtype=numpy.float32) # dimention=28
     return feature_array
+
+def generate_input_case(doc_mention_arrays,doc_pair_arrays):
+
+    train_case = []
+
+    mentions_num = len(doc_mention_arrays)
+
+    for i in range(mentions_num):
+        mention_array = doc_mention_arrays[i]
+        this_train_case = []
+
+        for j in range(0,i):
+            mention_in_cluster_array = doc_mention_arrays[j]
+            #pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j -1]  #等差数列算出
+            pair_features = doc_pair_arrays[(j,i)]
+            this_input = numpy.append(mention_array,mention_in_cluster_array)
+            this_input = numpy.append(this_input,pair_features)
+            this_train_case.append(this_input)
+
+        this_train_case = numpy.array(this_train_case,dtype = numpy.float32)
+
+        mention_array_float = numpy.array([mention_array],dtype = numpy.float32)
+
+        train_case.append((mention_array_float,this_train_case))
+
+    return train_case
+
+def case_generater(docs,typ,w2v):
+
+    if os.path.isfile("./model/case_input_%s."%typ+args.language):
+        print >> sys.stderr,"Read data from ./model/case_input_%s."%typ+args.language
+        read_f = file("./model/case_input_%s."%typ+args.language, 'rb')
+        doc_num = 1
+        while True:
+            start_time = timeit.default_timer()
+            train_case,gold_chain = cPickle.load(read_f)
+            #doc_mention_array,doc_pair_array,doc_gold_chain = cPickle.load(read_f)
+            if train_case == ENDTAG:
+                break
+            yield train_case,gold_chain
+            end_time = timeit.default_timer()
+            print >> sys.stderr, "Use %.3f seconds for doc %d with %d mentions"%(end_time-start_time,doc_num,len(train_case))
+            doc_num += 1
+    else:
+        print >> sys.stderr,"Generate %s cases inputs for %s"%(typ,args.language)
+
+        start_time = timeit.default_timer()
+
+        print >> sys.stderr,"SV case input to ./model/case_input_%s."%typ+args.language
+        save_f = file('./model/case_input_%s.'%typ+args.language, 'wb')
+    
+        for doc in docs:
+            mention_arrays = []
+            #pair_arrays = []
+            pair_arrays = {}
+
+            ## feature and embedding for each Mention
+            for mention in doc.mentions:
+                this_mention_embedding = get_embedding(mention,w2v,doc)
+                mention_arrays.append(this_mention_embedding)
+    
+            ## features for each pair
+            mentions_nums = len(doc.mentions)
+            for i in range(len(doc.mentions)):
+                for j in range(i+1,len(doc.mentions)):
+                    pair_feature = get_pair_embedding(i,j,doc)
+                    #pair_arrays.append(pair_feature) # i,j : pair_arrays[i*mentions_nums+j] = pair_feature
+                    pair_arrays[(i,j)] = pair_feature
+
+            train_case = generate_input_case(numpy.array(mention_arrays,dtype = numpy.float32),pair_arrays)
+
+            #cPickle.dump((mention_arrays,pair_arrays,doc.gold_chain), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump((train_case,doc.gold_chain), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+
+            yield train_case,doc.gold_chain
+   
+        cPickle.dump((ENDTAG,None), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+        save_f.close()
+
 
 def array_generater(docs,typ,w2v):
 
@@ -241,7 +320,7 @@ def array_generater(docs,typ,w2v):
                 break
             yield doc_mention_array,doc_pair_array,doc_gold_chain
             end_time = timeit.default_timer()
-            print >> sys.stderr, "Use %.3f seconds for doc %d"%(end_time-start_time,doc_num)
+            print >> sys.stderr, "Use %.3f seconds for doc %d with %d mentions"%(end_time-start_time,doc_num,len(doc_mention_array))
             doc_num += 1
     else:
         print >> sys.stderr,"Generate %s arrays for %s"%(typ,args.language)
@@ -254,6 +333,7 @@ def array_generater(docs,typ,w2v):
         for doc in docs:
             mention_arrays = []
             pair_arrays = []
+            #pair_arrays = {}
 
     
             ## feature and embedding for each Mention
@@ -266,8 +346,8 @@ def array_generater(docs,typ,w2v):
             for i in range(len(doc.mentions)):
                 for j in range(i+1,len(doc.mentions)):
                     pair_feature = get_pair_embedding(i,j,doc)
-                    pair_arrays.append(pair_feature) # i,j : pair_arrays[i*mentions_nums+j] = pair_feature
-                    #pair_arrays[(i,j)] = pair_feature
+                    #pair_arrays.append(pair_feature) # i,j : pair_arrays[i*mentions_nums+j] = pair_feature
+                    pair_arrays[(i,j)] = pair_feature
 
             cPickle.dump((mention_arrays,pair_arrays,doc.gold_chain), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
 

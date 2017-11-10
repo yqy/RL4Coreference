@@ -68,7 +68,8 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]
-            pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j -1]  #等差数列算出
+            #pair_features = doc_pair_arrays[(2*mentions_num-j-1)*j/2 + i-j -1]  #等差数列算出
+            pair_features = doc_pair_arrays[(j,i)]
             this_input = numpy.append(mention_array,mention_in_cluster_array)
             this_input = numpy.append(this_input,pair_features) 
             this_train_case.append(this_input)
@@ -81,10 +82,11 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 
     return train_case
 
-def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+#def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+def generate_policy_case(train_case,gold_chain=[],network=None):
     reward = 0.0
 
-    train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
+    #train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
 
     actions_dict = {}
 
@@ -130,11 +132,12 @@ def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],networ
     #for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:
     #    yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
 
-def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+#def generate_policy_test(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
+def generate_policy_test(train_case,gold_chain=[],network=None):
     cluster_info = []
     new_cluster_num = 0
 
-    train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
+    #train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
 
     for single,tc in train_case:
         if len(tc) == 0:

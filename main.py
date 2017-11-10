@@ -62,13 +62,15 @@ def main():
 
     #pretrain
     times = 0
-    for echo in range(20):
+    for echo in range(0):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
         #print >> sys.stderr, network_model.get_weight_sum()
-        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-            for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+        #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
+            #for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+            for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(cases,gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0003)[0]
 
         end_time = timeit.default_timer()
@@ -83,8 +85,10 @@ def main():
     ## test performance after pretraining
     dev_docs_for_test = []
     num = 0
-    for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
-        ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+    #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+        #ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+    for cases,gold_chain in DataGenerate.case_generater(dev_docs,"dev",w2v):
+        ev_doc = policy_network.generate_policy_test(cases,gold_chain,network_model)
         dev_docs_for_test.append(ev_doc)
     print "Performance on DEV after PreTRAINING"
     mp,mr,mf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.muc)
@@ -101,22 +105,25 @@ def main():
     train4test = [] # add 5 items for testing the training performance
     add2train = True
 
-    for echo in range(20):
+    for echo in range(0):
         start_time = timeit.default_timer()
         reward_baseline = []
         cost_this_turn = 0.0
 
-        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
         
             if add2train:
                 if random.randint(1,200) == 100:
-                    train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
+                    #train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
+                    train4test.append((cases,gold_chain))
                     if len(train4test) == 5:
                         add2train = False
 
             this_reward = 0.0
 
-            for single, train, action, reward in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+            #for single, train, action, reward in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+            for single, train, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
                 #reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
                 #norm_reward = numpy.array(reward_batch) - reward_b
 
@@ -132,8 +139,9 @@ def main():
         ## test training performance
         train_docs_for_test = []
         start_time = timeit.default_timer()
-        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in train4test:
-            ev_doc = policy_network.generate_policy_test(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model)
+
+        for train_cases,train_doc_gold_chain in train4test:
+            ev_doc = policy_network.generate_policy_test(train_cases,train_doc_gold_chain,network_model)
             train_docs_for_test.append(ev_doc)
         print "** Echo: %d **"%echo
         print "TRAIN"
@@ -148,8 +156,10 @@ def main():
         ## dev
         dev_docs_for_test = []
         start_time = timeit.default_timer()
-        for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
-            ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+        #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
+            #ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
+        for dev_cases,dev_doc_gold_chain in DataGenerate.case_generater(dev_docs,"dev",w2v):
+            ev_doc = policy_network.generate_policy_test(dev_cases,dev_doc_gold_chain,network_model)
             dev_docs_for_test.append(ev_doc)
         print "DEV"
         mp,mr,mf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.muc)
@@ -167,8 +177,9 @@ def main():
         ## test
         test_docs_for_test = []
         start_time = timeit.default_timer()
-        for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
-            ev_doc = policy_network.generate_policy_test(test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain,network_model)
+        #for test_doc_mention_array,test_doc_pair_array,test_doc_gold_chain in DataGenerate.array_generater(test_docs,"test",w2v):
+        for test_cases,test_doc_gold_chain in DataGenerate.case_generater(test_docs,"test",w2v):
+            ev_doc = policy_network.generate_policy_test(test_cases,test_doc_gold_chain,network_model)
             test_docs_for_test.append(ev_doc)
         print "TEST"
         mp,mr,mf = evaluation.evaluate_documents(test_docs_for_test,evaluation.muc)
