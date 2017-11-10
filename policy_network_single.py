@@ -56,15 +56,6 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
     for i in range(mentions_num):
         mention_array = doc_mention_arrays[i]
         this_train_case = []
-            
-        '''
-        if not pretrain:
-            ## add a Noun cluster
-            Noun_cluster_array = numpy.array([0.0]*len(mention_array))
-            this_input = numpy.append(mention_array,Noun_cluster_array)
-            this_input = numpy.append(this_input,numpy.array([0.0]*28))
-            this_train_case.append(this_input)
-        '''
 
         for j in range(0,i):
             mention_in_cluster_array = doc_mention_arrays[j]

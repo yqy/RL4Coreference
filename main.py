@@ -70,6 +70,8 @@ def main():
         #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
             #for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
+            if len(cases) >= 700:
+                continue
             for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(cases,gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0003)[0]
 

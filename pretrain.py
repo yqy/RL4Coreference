@@ -101,7 +101,7 @@ def generater_pretrain(train_case, gold_dict):
 
     total_num = len(train_case)
 
-    #numpy.random.shuffle(train_case)
+    numpy.random.shuffle(train_case)
 
     neg_num = 0
     pos_num = 0
