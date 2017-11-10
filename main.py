@@ -114,7 +114,7 @@ def main():
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
         
             if add2train:
-                if random.randint(1,200) == 100:
+                if random.randint(1,200) == 10:
                     #train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
                     train4test.append((cases,gold_chain))
                     if len(train4test) == 5:
