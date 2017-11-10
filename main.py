@@ -73,15 +73,15 @@ def main():
             if len(cases) >= 700:
                 continue
             for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(cases,gold_chain,network_model):
-                cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0003)[0]
+                cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0001)[0]
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
         print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
 
-    save_f = file('./model/network_model_pretrain.'+args.language, 'wb')
-    cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
-    save_f.close()
+        save_f = file('./model/network_model_pretrain.'+args.language, 'wb')
+        cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+        save_f.close()
     print >> sys.stderr,"Begin test on DEV after pertraining"
     
     ## test performance after pretraining
