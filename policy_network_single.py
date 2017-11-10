@@ -25,6 +25,7 @@ def sample_action(action_probability):
     action = numpy.random.choice(numpy.arange(len(ac)),p=ac)
     return action
 def choose_action(action_probability):
+    #print action_probability
     ac_list = list(action_probability)
     action = ac_list.index(max(ac_list))
     return action
