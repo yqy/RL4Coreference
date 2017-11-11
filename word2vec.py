@@ -25,9 +25,9 @@ def cosin(Al,Bl):
     sim = cos
     return sim
 
-
 class Word2Vec:
     word_dict = {}
+    index_dict = {}
     def __init__(self,w2v_dir="",dimention=50):
         if w2v_dir == "":
             print >> sys.stderr, "Please give the embedding file"
@@ -35,14 +35,23 @@ class Word2Vec:
         self.dimention = dimention
         f = file(w2v_dir, 'rb')
         embedding_list = cPickle.load(f)
+        num = 1
         for word,em in embedding_list:
             self.word_dict[word] = em
+            self.index_dict[word] = num
+            num += 1
         print >> sys.stderr,"Total %d word embedding!"%len(embedding_list)
     def get_vector_by_word(self,word):
         if word in self.word_dict:
             return self.word_dict[word]
         else:
             return array([0.0]*self.dimention)
+
+    def get_index_by_word(self,word):
+        if word in self.index_dict:
+            return self.index_dict[word]
+        else:
+            return 0
 
     def get_vector_by_list(self,wl):
         result = array([0.0]*self.dimention)
@@ -52,31 +61,9 @@ class Word2Vec:
             return array([0.0]*self.dimention)
         return result/len(wl)
 
-
-class Word2VecIndex:
-    word_dict = {}
-    def __init__(self,w2v_dir="",dimention=50):
-        self.dimention = dimention
-        if w2v_dir == "":
-            print >> sys.stderr, "Please give the embedding file"
-            return
-
-        self.dimention = dimention
-        f = file(w2v_dir, 'rb')
-        embedding_list = cPickle.load(f)
-        index = 1 ## line 0 is [0,0,0,0,0...0]
-        for word,em in embedding_list:
-            self.word_dict[word] = index
-            index += 1
-
-    def get_index_by_word(self,word):
-        if word in self.word_dict:
-            return self.word_dict[word]
-        else:
-            return -1
-
 def main():
-    w2v = Word2Vec("/Users/yqy/data/coreference/embedding/embedding.cn",64)
+    #w2v = Word2Vec("/Users/yqy/data/coreference/embedding/embedding.en.filtered",50)
+    w2v = Word2Vec("/Users/yqy/data/coreference/embedding/embedding.cn.filtered",64)
     print "go"
     while True:
         line = sys.stdin.readline()
@@ -84,6 +71,8 @@ def main():
         line = line.strip().split(" ")
         l1 = w2v.get_vector_by_word(line[0].strip())
         l2 = w2v.get_vector_by_word(line[1].strip())
+        print l1
+        print l2
         print cosin(l1,l2)
 
 def generate_embedding_file_from_Kevin():
