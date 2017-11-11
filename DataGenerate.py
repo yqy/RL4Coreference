@@ -256,6 +256,9 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays):
 
 def case_generater(docs,typ,w2v):
     for mention_arrays, pair_arrays, gold_chain in array_generater(docs,typ,w2v):
+        if typ == "train":
+            if len(mention_arrays) >= 700:
+                continue
         train_case = generate_input_case(mention_arrays,pair_arrays)
         yield train_case,gold_chain
 

@@ -39,8 +39,8 @@ def main():
 
     #network_model
     if os.path.isfile("./model/network_model."+args.language):
-        #read_f = file('./model/network_model.'+args.language, 'rb')
-        read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        read_f = file('./model/network_model.'+args.language, 'rb')
+        #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model."+args.language
     else:
@@ -62,7 +62,7 @@ def main():
 
     #pretrain
     times = 0
-    for echo in range(5):
+    for echo in range(20):
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
         cost_this_turn = 0.0
@@ -73,8 +73,8 @@ def main():
             if len(cases) >= 700:
                 continue
             for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(cases,gold_chain,network_model):
-                #cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0001)[0]
-                cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.00003)[0]
+                cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0001)[0]
+                #cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.00003)[0]
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn

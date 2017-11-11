@@ -118,10 +118,10 @@ def generater_pretrain(train_case, gold_dict):
                     lables[j+1] = 1
                 
         add = True
-
-        '''
         if sum(lables) == 0:
             lables[0] = 1
+
+        '''
             
             if neg_num > 0:
                 add = False
