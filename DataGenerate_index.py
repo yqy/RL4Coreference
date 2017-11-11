@@ -250,7 +250,7 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays):
             this_input_embedding = numpy.append(mention_array,candidate_array)
             this_input_embedding = numpy.append(this_input_embedding,pair_features)
 
-            this_input_index = mention_index_array + candidate_index_array
+            this_input_index = numpy.append(mention_index_array,candidate_index_array)
 
             this_train_case.append(numpy.array(this_input_embedding,dtype = numpy.float32))
             this_train_case_index.append(this_input_index)

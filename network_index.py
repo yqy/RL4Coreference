@@ -44,6 +44,8 @@ class NetWork():
         self.x_inpt_index = T.imatrix()
         self.x_inpt = T.concatenate((self.x_inpt_embedding,self.embedding[self.x_inpt_index].flatten(2)),axis=1) 
 
+        self.fff = theano.function(inputs=[self.x_inpt_embedding,self.x_inpt_index],outputs=[self.x_inpt])
+
         w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer_",special=True,ones=False) 
         self.params += [w_h_1,b_h_1]
 
@@ -150,7 +152,6 @@ class NetWork():
             inputs=[self.x_inpt_single,self.x_inpt,lable],
             outputs=[self.classification_results],
             on_unused_input='warn')
-
     def show_para(self):
         for para in self.params:
             print >> sys.stderr, para,para.get_value() 
@@ -181,15 +182,13 @@ def main():
     #r.show_para()
 
 def t():
-    w,b = init_weight(10,3)
-    x = T.matrix()
-    y = T.imatrix()
-    m = T.concatenate((x,w[y].flatten(2)),axis=1)
+    #m = T.concatenate((x,w[y].flatten(2)),axis=1)
     #m = w[y].flatten(2)
-    f = theano.function(inputs=[x,y],outputs=[m])
-    x = [[1],[2],[3],[4],[5]]
-    y = [[0,0],[1,1],[0,1],[1,0],[3,4]]
-    print f(x,y)
+    network_model = NetWork(1738,855,1000,"/Users/yqy/data/coreference/embedding/embedding.cn.filtered",64)
+
+    x = [[1,2],[0,3]]
+    e = [[1,2,3],[4,5,6]]
+    print network_model.f(e,x)
 
 if __name__ == "__main__":
     #main()
