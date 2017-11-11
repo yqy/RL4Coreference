@@ -57,19 +57,16 @@ def init_weight(n_in,n_out,activation_fn=sigmoid,pre="",special=False,uni=True,o
     return w,b
 
 def init_weight_file(fn,dimention=100,pre="embedding"):
-    f = open(fn)
+    f = file(fn, 'rb')
     numnum = 1.
-    oo = []
-    oo.append([0.0]*dimention)
-    while True:
-        line = f.readline()
-        if not line:break
-        line = line.strip().split(" ")[1:]
-        numnum += 1
-        out = [float(t.strip()) for t in line]
-        if not len(out) == dimention:continue
-        oo.append(out)
-    W_values = np.asarray(oo,dtype = theano.config.floatX)
+    eMatrix = []
+    eMatrix.append([0.0]*dimention)
+    embedding_list = cPickle.load(f)
+    for word,em in embedding_list:
+        eMatrix.append(em)
+
+    W_values = np.asarray(eMatrix,dtype = theano.config.floatX)
+
     w = theano.shared(
         value=W_values,
         name='%sw'%pre, borrow=True
