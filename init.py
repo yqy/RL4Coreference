@@ -2,6 +2,7 @@ from __future__ import absolute_import
 #from keras import backend as K
 import numpy as np
 from conf import *
+import sys
 
 import theano
 import theano.tensor as T
@@ -12,6 +13,7 @@ from theano.tensor import shared_randomstreams
 from theano.compile.nanguardmode import NanGuardMode
 
 import lasagne
+import cPickle
 
 #theano.config.exception_verbosity="high"
 #theano.config.optimizer="fast_compile"
@@ -64,6 +66,7 @@ def init_weight_file(fn,dimention=100,pre="embedding"):
     embedding_list = cPickle.load(f)
     for word,em in embedding_list:
         eMatrix.append(em)
+    print >> sys.stderr, "Total Read Embedding ", len(eMatrix)
 
     W_values = np.asarray(eMatrix,dtype = theano.config.floatX)
 

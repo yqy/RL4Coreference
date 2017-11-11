@@ -38,10 +38,11 @@ class NetWork():
         self.params = []
         
         self.embedding = init_weight_file(embedding_file,n_embedding)
+        self.params.append(self.embedding)
 
         self.x_inpt_embedding = T.fmatrix("input_pair_embeddings")
         self.x_inpt_index = T.imatrix()
-        self.x_inpt = T.concatenate((x_inpt_embedding,self.embedding[sel.x_inpt_index].flatten(2)),axis=1) 
+        self.x_inpt = T.concatenate((self.x_inpt_embedding,self.embedding[self.x_inpt_index].flatten(2)),axis=1) 
 
         w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer_",special=True,ones=False) 
         self.params += [w_h_1,b_h_1]
@@ -67,7 +68,7 @@ class NetWork():
         #self.x_inpt_single = T.fmatrix("input_single_embeddings")
         self.x_inpt_single_embedding = T.fmatrix("input_single_embeddings")
         self.x_inpt_single_index = T.imatrix()
-        self.x_inpt_single = T.concatenate((x_inpt_single_embedding,self.embedding[sel.x_inpt_single_index].flatten(2)),axis=1) 
+        self.x_inpt_single = T.concatenate((self.x_inpt_single_embedding,self.embedding[self.x_inpt_single_index].flatten(2)),axis=1) 
 
         w_h_1_single,b_h_1_single = init_weight(n_single,n_hidden,pre="inpt_single_layer_",special=True,ones=False) 
         self.params += [w_h_1_single,b_h_1_single]
@@ -103,7 +104,7 @@ class NetWork():
         Reward = T.fscalar("Reward")
         y = T.iscalar('classification')
 
-        l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
+        l2_norm_squared = sum([(abs(w)).sum() for w in self.params[1:]])
         lmbda_l2 = 0.0000003
 
         self.get_weight_sum = theano.function(inputs=[],outputs=[l2_norm_squared])
@@ -111,10 +112,7 @@ class NetWork():
         cost = (-Reward) * T.log(self.policy[y] + 1e-6)\
                 + lmbda_l2*l2_norm_squared
 
-        self.params_with_embedding = self.params.append(self.embedding)
-
-        #grads = T.grad(cost, self.params)
-        grads = T.grad(cost, self.params_with_embedding)
+        grads = T.grad(cost, self.params)
         clip_grad = 5.0
         cgrads = [T.clip(g,-clip_grad, clip_grad) for g in grads]
         updates = lasagne.updates.rmsprop(cgrads, self.params, learning_rate=lr)
@@ -135,8 +133,7 @@ class NetWork():
                     - T.sum(T.log(1-self.classification_results+ 1e-6 )*(1-lable)))/(T.sum(lable) + T.sum(1-lable))\
                     + lmbda_l2*l2_norm_squared
 
-        #pregrads = T.grad(pre_cost, self.params)
-        pregrads = T.grad(pre_cost, self.params_with_embedding)
+        pregrads = T.grad(pre_cost, self.params)
         #max_norm = 5.0
         clip_grad = 5.0
         pre_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in pregrads]
