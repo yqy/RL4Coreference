@@ -70,6 +70,7 @@ def main():
             if len(cases) >= 700:
                 continue
             for single_mention_array,single_index,train_list,train_index,lable_list in pretrain.generate_pretrain_case(cases,gold_chain,network_model):
+                print network_model.fff(train_list,train_index)
                 cost_this_turn += network_model.pre_train_step(single_mention_array,single_index,train_list,train_index,lable_list,0.0001)[0]
 
         end_time = timeit.default_timer()

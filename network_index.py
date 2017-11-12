@@ -38,7 +38,7 @@ class NetWork():
         self.params = []
         
         self.embedding = init_weight_file(embedding_file,n_embedding)
-        self.params.append(self.embedding)
+        #self.params.append(self.embedding)
 
         self.x_inpt_embedding = T.fmatrix("input_pair_embeddings")
         self.x_inpt_index = T.imatrix()
