@@ -96,7 +96,8 @@ def generate_policy_case(train_case,gold_chain=[],network=None):
             action_probability = numpy.array([1])
         else:
             action_probability = network.predict(single,tc)[0]
-        action = sample_action(action_probability)
+        #action = sample_action(action_probability)
+        action = choose_action(action_probability)
         actions.append(action)
 
         if (action-1) == -1: # -1 means a new cluster

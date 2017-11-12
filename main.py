@@ -127,14 +127,16 @@ def main():
                         add2train = False
 
             this_reward = 0.0
+            reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
 
-            #for single, train, action, reward in policy_network.generate_policy_case(train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain,network_model):
             for single, train, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
-                #reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
-                #norm_reward = numpy.array(reward_batch) - reward_b
+
+                norm_reward = reward - reward_b
+
                 this_reward = reward
 
-                cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
+                #cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
+                cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.00001)[0]
 
             average_reward += this_reward
             done_case_num += 1
@@ -144,9 +146,9 @@ def main():
         print >> sys.stderr, "Average Reward:",average_reward/float(done_case_num)
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
         
-        #reward_baseline.append(this_reward)
-        #if len(reward_baseline) >= 32:
-        #    reward_baselin = reward_baseline[1:]
+        reward_baseline.append(this_reward)
+        if len(reward_baseline) >= 64:
+            reward_baselin = reward_baseline[1:]
 
         ## test training performance
         train_docs_for_test = []
