@@ -39,8 +39,8 @@ def main():
 
     #network_model
     if os.path.isfile("./model/network_model."+args.language):
-        read_f = file('./model/network_model.'+args.language, 'rb')
-        #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        #read_f = file('./model/network_model.'+args.language, 'rb')
+        read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model."+args.language
     else:
@@ -59,7 +59,7 @@ def main():
     train_docs = DataGenerate.doc_data_generater("train")
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
-
+    '''
     #pretrain
     times = 0
     for echo in range(20):
@@ -100,9 +100,10 @@ def main():
     print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
     cp,cr,cf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.ceafe)
     print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
-    print "##################################################" 
+    print "#################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
+    '''
 
     ##train
     train4test = [] # add 5 items for testing the training performance
@@ -112,10 +113,12 @@ def main():
         start_time = timeit.default_timer()
         reward_baseline = []
         cost_this_turn = 0.0
+        average_reward = 0.0
+        done_case_num = 0
 
         #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
-        
+
             if add2train:
                 if random.randint(1,200) == 10:
                     #train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
@@ -129,10 +132,16 @@ def main():
             for single, train, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
                 #reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
                 #norm_reward = numpy.array(reward_batch) - reward_b
+                this_reward = reward
 
-                cost_this_turn += network_model.train_step(single,train,action,reward,0.0001)[0]
+                cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
+
+            average_reward += this_reward
+            done_case_num += 1
+
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
+        print >> sys.stderr, "Average Reward:",average_reward/float(done_case_num)
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
         
         #reward_baseline.append(this_reward)
