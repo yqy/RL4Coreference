@@ -73,6 +73,58 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 
     return train_case
 
+def generate_policy_case_trick(train_case,gold_chain=[],network=None):
+    reward = 0.0
+
+    #train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
+
+    actions_dict = {}
+
+    items_in_batch = []
+
+    st = timeit.default_timer()
+
+    start_time = timeit.default_timer()
+    #print len(train_case)
+    
+    cluster_info = []
+    new_cluster_num = 0
+    actions = []
+    action_p = []
+    for single,tc in train_case:
+        if len(tc) == 0:
+            action_probability = numpy.array([1])
+        else:
+            action_probability = network.predict(single,tc)[0]
+        action = sample_action(action_probability)
+        action_p.append(action_probability[action])
+        #action = choose_action(action_probability)
+        actions.append(action)
+
+        if (action-1) == -1: # -1 means a new cluster
+            should_cluster = new_cluster_num
+            new_cluster_num += 1
+        else:
+            should_cluster = cluster_info[action-1]
+
+        cluster_info.append(should_cluster)
+
+    reward = get_reward(cluster_info,gold_chain,new_cluster_num)
+
+    indexs = range(len(actions))
+
+    numpy.random.shuffle(indexs) ## for the first mention, it has no mention-pair information, thus should not trained
+
+    for i in indexs:
+        single,tc = train_case[i]
+        if len(tc) == 0:
+            continue
+        yield single, tc, actions[i], reward, action_p[i]
+
+    #for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:
+    #    yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
+
+
 #def generate_policy_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
 def generate_policy_case(train_case,gold_chain=[],network=None):
     reward = 0.0

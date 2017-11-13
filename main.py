@@ -39,8 +39,9 @@ def main():
 
     #network_model
     if os.path.isfile("./model/network_model."+args.language):
-        #read_f = file('./model/network_model.'+args.language, 'rb')
-        read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        read_f = file('./model/network_model.'+args.language, 'rb')
+        #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        #read_f = file('./model/network_model_pretrain.cn.best', 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model."+args.language
     else:
@@ -59,8 +60,11 @@ def main():
     train_docs = DataGenerate.doc_data_generater("train")
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
-    '''
+
     #pretrain
+    l2_lambda = 0.0000003
+    lr = 0.00002
+
     times = 0
     for echo in range(20):
         start_time = timeit.default_timer()
@@ -73,14 +77,14 @@ def main():
             if len(cases) >= 700:
                 continue
             for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(cases,gold_chain,network_model):
-                cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0001)[0]
-                #cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.00003)[0]
+                #cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,0.0001)[0]
+                cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,lr,l2_lambda)[0]
 
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
         print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
 
-        save_f = file('./model/network_model_pretrain.'+args.language, 'wb')
+        save_f = file('./model/pretrain/network_model_pretrain.%s.%d'%(args.language,echo), 'wb')
         cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
     print >> sys.stderr,"Begin test on DEV after pertraining"
@@ -103,7 +107,7 @@ def main():
     print "#################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
-    '''
+    return
 
     ##train
     train4test = [] # add 5 items for testing the training performance
@@ -116,8 +120,8 @@ def main():
         average_reward = 0.0
         done_case_num = 0
 
-        #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-        for cases,gold_chain in DataGenerate.case_generater_trick(train_docs,"train",w2v):
+        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        #for cases,gold_chain in DataGenerate.case_generater_trick(train_docs,"train",w2v):
 
             '''
             if add2train:
@@ -133,6 +137,7 @@ def main():
             reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
 
             for single, train, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
+            #for single, train, action, reward , acp in policy_network.generate_policy_case_trick(cases,gold_chain,network_model):
 
                 norm_reward = reward - reward_b
 
@@ -140,12 +145,14 @@ def main():
 
                 #cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
                 #cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.000003)[0]
-                cost_this_turn += network_model.train_step(single,train,action,reward,0.000002)[0]
+                this_cost = network_model.train_step(single,train,action,reward,0.0001,l2_lambda)[0]
+                #print this_cost,acp,reward
+                cost_this_turn += this_cost
 
             average_reward += this_reward
             done_case_num += 1
 
-            if done_case_num >= 20:
+            if done_case_num >= 1:
                 break
         print network_model.get_weight_sum()
         end_time = timeit.default_timer()

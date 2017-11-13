@@ -95,12 +95,13 @@ class NetWork():
         y = T.iscalar('classification')
 
         l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
-        lmbda_l2 = 0.0000003
+        #lmbda_l2 = 0.0000003
+        lmbda_l2_train = T.fscalar("Reward")
 
         self.get_weight_sum = theano.function(inputs=[],outputs=[l2_norm_squared])
 
         cost = (-Reward) * T.log(self.policy[y] + 1e-6)\
-                + lmbda_l2*l2_norm_squared
+                + lmbda_l2_train*l2_norm_squared
 
         grads = T.grad(cost, self.params)
         #grads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in grads]
@@ -110,7 +111,7 @@ class NetWork():
         updates = lasagne.updates.rmsprop(cgrads, self.params, learning_rate=lr)
 
         self.train_step = theano.function(
-            inputs=[self.x_inpt_single,self.x_inpt,y,Reward,lr],
+            inputs=[self.x_inpt_single,self.x_inpt,y,Reward,lr,lmbda_l2_train],
             outputs=[cost],
             on_unused_input='warn',
             updates=updates)
@@ -120,28 +121,44 @@ class NetWork():
 
         pre_lr = T.fscalar()
         lable = T.ivector()
+        lmbda_l2_pretrain = T.fscalar("Reward")
 
         pre_cost = (- T.sum(T.log(self.classification_results + 1e-6 )*lable)\
                     - T.sum(T.log(1-self.classification_results+ 1e-6 )*(1-lable)))/(T.sum(lable) + T.sum(1-lable))\
-                    + lmbda_l2*l2_norm_squared
-        #pre_cost = - T.sum(T.log(self.classification_results + 1e-7 )*lable)/(T.sum(lable)+1)\
-        #            - T.sum(T.log(1-self.classification_results+ 1e-7 )*(1-lable))/(T.sum(1-lable)+1)\
-        #            + lmbda_l2*l2_norm_squared
+                    + lmbda_l2_pretrain*l2_norm_squared
 
         pregrads = T.grad(pre_cost, self.params)
-        #max_norm = 5.0
-        #pregrads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in pregrads]
         clip_grad = 5.0
         pre_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in pregrads]
 
-        #pre_updates = lasagne.updates.rmsprop(pregrads, self.params, learning_rate=0.0001)
         pre_updates = lasagne.updates.rmsprop(pre_cgrads, self.params, learning_rate=pre_lr)
 
         self.pre_train_step = theano.function(
-            inputs=[self.x_inpt_single,self.x_inpt,lable,pre_lr],
+            inputs=[self.x_inpt_single,self.x_inpt,lable,pre_lr,lmbda_l2_pretrain],
             outputs=[pre_cost],
             on_unused_input='warn',
             updates=pre_updates)
+
+        # top-pair
+        pre_top_lr = T.fscalar()
+        lable_top = T.ivector()
+        lmbda_l2_pretrain_top = T.fscalar("Reward")
+
+        pre_top_cost = (- T.max(T.log(self.classification_results + 1e-6 )*lable_top)\
+                    - T.max(T.log(1-self.classification_results+ 1e-6 )*(1-lable_top)))\
+                    + lmbda_l2_pretrain_top*l2_norm_squared
+
+        pregrads_top = T.grad(pre_top_cost, self.params)
+        clip_grad = 5.0
+        pre_top_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in pregrads_top]
+
+        pre_top_updates = lasagne.updates.rmsprop(pre_top_cgrads, self.params, learning_rate=pre_top_lr)
+
+        self.pre_top_train_step = theano.function(
+            inputs=[self.x_inpt_single,self.x_inpt,lable_top,pre_top_lr,lmbda_l2_pretrain_top],
+            outputs=[pre_top_cost],
+            on_unused_input='warn',
+            updates=pre_top_updates)
 
         self.pre_predict = theano.function(
             inputs=[self.x_inpt_single,self.x_inpt,lable],
@@ -167,14 +184,16 @@ def main():
     #r.train_step(zp_x,1,1,5)
     #print r.predict(zp_x)[0]
 
-    lable = [0,1,0]
+    lable = [0,1,1]
     pre_lr = 5
+    l2 = 0.001
     print r.pre_predict(x_sinlge,zp_x,lable)
     #r.show_para()
-    print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr)
-    print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr)
-    print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr)
-    print r.pre_predict(x_sinlge,zp_x,lable)
+    print r.pre_top_train_step(x_sinlge,zp_x,lable,pre_lr,l2)
+    #print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr,l2)
+    #print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr,l2)
+    #print r.pre_train_step(x_sinlge,zp_x,lable,pre_lr,l2)
+    #print r.pre_predict(x_sinlge,zp_x,lable)
     #r.show_para()
 
 if __name__ == "__main__":
