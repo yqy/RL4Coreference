@@ -137,14 +137,15 @@ def main():
                 this_reward = reward
 
                 #cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
-                cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.000003)[0]
+                #cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.000003)[0]
+                cost_this_turn += network_model.train_step(single,train,action,reward,0.000002)[0]
 
             average_reward += this_reward
             done_case_num += 1
 
             if done_case_num >= 20:
                 break
-
+        print network_model.get_weight_sum()
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
         print >> sys.stderr, "Average Reward:",average_reward/float(done_case_num)
@@ -154,6 +155,7 @@ def main():
         if len(reward_baseline) >= 64:
             reward_baselin = reward_baseline[1:]
 
+        ''' 
         ## test training performance
         train_docs_for_test = []
         start_time = timeit.default_timer()
@@ -191,7 +193,7 @@ def main():
         end_time = timeit.default_timer()
         print >> sys.stderr, "DEV Use %.3f seconds"%(end_time-start_time)
         sys.stdout.flush()
-    
+   
         ## test
         test_docs_for_test = []
         start_time = timeit.default_timer()
@@ -215,7 +217,7 @@ def main():
         save_f = file('./model/nets/network_model.%s.%d'%(args.language,echo), 'wb')
         cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
-
+        '''
 
 if __name__ == "__main__":
     main()
