@@ -136,7 +136,7 @@ def main():
                 this_reward = reward
 
                 #cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
-                cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.00001)[0]
+                cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.000003)[0]
 
             average_reward += this_reward
             done_case_num += 1
