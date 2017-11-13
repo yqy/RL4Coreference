@@ -262,6 +262,25 @@ def case_generater(docs,typ,w2v):
         train_case = generate_input_case(mention_arrays,pair_arrays)
         yield train_case,gold_chain
 
+def case_generater_trick(docs,typ,w2v):
+    if os.path.isfile("./model/case_input_%s."%typ+args.language):
+        print >> sys.stderr,"Read data from ./model/case_input_%s."%typ+args.language
+        read_f = file("./model/case_input_%s."%typ+args.language, 'rb')
+        for i in range(20):
+            train_case,gold_chain = cPickle.load(read_f)
+            yield train_case,gold_chain
+        read_f.close()
+    else:
+        print >> sys.stderr,"SV case input to ./model/case_input_%s."%typ+args.language
+        save_f = file('./model/case_input_%s.'%typ+args.language, 'wb')
+        for mention_arrays, pair_arrays, gold_chain in array_generater(docs,typ,w2v):
+            if typ == "train":
+                if len(mention_arrays) >= 700:
+                    continue
+            train_case = generate_input_case(mention_arrays,pair_arrays)
+            cPickle.dump((train_case,gold_chain), save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+            yield train_case,gold_chain
+        save_f.close()
 
 def case_generater_save(docs,typ,w2v):
 

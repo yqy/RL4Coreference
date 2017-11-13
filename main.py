@@ -117,8 +117,9 @@ def main():
         done_case_num = 0
 
         #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-        for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
+        for cases,gold_chain in DataGenerate.case_generater_trick(train_docs,"train",w2v):
 
+            '''
             if add2train:
                 #if random.randint(1,200) == 10:
                 if not random.randint(1,200) == 10:
@@ -126,6 +127,7 @@ def main():
                     train4test.append((cases,gold_chain))
                     if len(train4test) == 5:
                         add2train = False
+            '''
 
             this_reward = 0.0
             reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
