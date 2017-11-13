@@ -120,7 +120,8 @@ def main():
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
 
             if add2train:
-                if random.randint(1,200) == 10:
+                #if random.randint(1,200) == 10:
+                if not random.randint(1,200) == 10:
                     #train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
                     train4test.append((cases,gold_chain))
                     if len(train4test) == 5:
@@ -141,11 +142,14 @@ def main():
             average_reward += this_reward
             done_case_num += 1
 
+            if done_case_num >= 20:
+                break
+
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
         print >> sys.stderr, "Average Reward:",average_reward/float(done_case_num)
         print >> sys.stderr, "TRAINING Use %.3f seconds"%(end_time-start_time)
-        
+
         reward_baseline.append(this_reward)
         if len(reward_baseline) >= 64:
             reward_baselin = reward_baseline[1:]
