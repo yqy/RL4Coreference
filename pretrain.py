@@ -122,16 +122,13 @@ def generater_pretrain(train_case, gold_dict):
             lables[0] = 1
 
         '''
-            
             if neg_num > 0:
                 add = False
             else:
                 neg_num += 1
         else:
             neg_num -= 1
-        '''
 
-        '''
             if neg_num >= pos_num:
                 ra = random.randint(0,neg_num-pos_num)
                 if ra == 0:

@@ -24,6 +24,17 @@ def sample_action(action_probability):
     ac = action_probability/action_probability.sum()
     action = numpy.random.choice(numpy.arange(len(ac)),p=ac)
     return action
+
+def sample_action_trick(action_probability,ran_p = 0.05):
+    if random.random() <= ran_p:
+        action = random.randint(0,len(action_probability)-1)
+        return action
+    else:
+        ac = action_probability/action_probability.sum()
+        action = numpy.random.choice(numpy.arange(len(ac)),p=ac)
+        return action
+
+
 def choose_action(action_probability):
     #print action_probability
     ac_list = list(action_probability)
@@ -32,7 +43,8 @@ def choose_action(action_probability):
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
     ev_document = get_evaluation_document(cluster_info,gold_info,max_cluster_num)
-    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
+    #p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
+    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.muc)
     #print >> sys.stderr, p,r,f
     return f
 
@@ -73,7 +85,7 @@ def generate_input_case(doc_mention_arrays,doc_pair_arrays,pretrain=False):
 
     return train_case
 
-def generate_policy_case_trick(train_case,gold_chain=[],network=None):
+def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.05):
     reward = 0.0
 
     #train_case = generate_input_case(doc_mention_arrays,doc_pair_arrays)
@@ -96,7 +108,7 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None):
             action_probability = numpy.array([1])
         else:
             action_probability = network.predict(single,tc)[0]
-        action = sample_action(action_probability)
+        action = sample_action_trick(action_probability,ran_p)
         action_p.append(action_probability[action])
         #action = choose_action(action_probability)
         actions.append(action)
@@ -152,7 +164,7 @@ def generate_policy_case(train_case,gold_chain=[],network=None):
         #action = choose_action(action_probability)
         actions.append(action)
 
-        if (action-1) == -1: # -1 means a new cluster
+        if action == 0: # 0 means a new cluster
             should_cluster = new_cluster_num
             new_cluster_num += 1
         else:

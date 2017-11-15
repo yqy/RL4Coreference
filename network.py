@@ -93,6 +93,7 @@ class NetWork():
         lr = T.fscalar()
         Reward = T.fscalar("Reward")
         y = T.iscalar('classification')
+        ce_lmbda = T.fscalar("cross_entropy_loss")
 
         l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
         #lmbda_l2 = 0.0000003
@@ -101,6 +102,7 @@ class NetWork():
         self.get_weight_sum = theano.function(inputs=[],outputs=[l2_norm_squared])
 
         cost = (-Reward) * T.log(self.policy[y] + 1e-6)\
+                + ce_lmbda * T.sum(self.policy*T.log(self.policy + 1e-7))\
                 + lmbda_l2_train*l2_norm_squared
 
         grads = T.grad(cost, self.params)
@@ -111,7 +113,7 @@ class NetWork():
         updates = lasagne.updates.rmsprop(cgrads, self.params, learning_rate=lr)
 
         self.train_step = theano.function(
-            inputs=[self.x_inpt_single,self.x_inpt,y,Reward,lr,lmbda_l2_train],
+            inputs=[self.x_inpt_single,self.x_inpt,y,Reward,lr,lmbda_l2_train,ce_lmbda],
             outputs=[cost],
             on_unused_input='warn',
             updates=updates)
@@ -164,6 +166,31 @@ class NetWork():
             inputs=[self.x_inpt_single,self.x_inpt,lable],
             outputs=[self.classification_results],
             on_unused_input='warn')
+
+        # cross-entropy
+        pre_ce_lr = T.fscalar()
+        lable_ce = T.ivector()
+        lmbda_l2_pretrain_ce = T.fscalar("Reward")
+        pre_ce_lmbda = T.fscalar()
+
+        pre_ce_cost = (- T.sum(T.log(self.policy + 1e-6 )*lable_ce)\
+                    - T.sum(T.log(1-self.policy+ 1e-6 )*(1-lable_ce)))/(T.sum(lable_ce) + T.sum(1-lable_ce))\
+                    + pre_ce_lmbda * T.sum(self.policy*T.log(self.policy + 1e-7))\
+                    + lmbda_l2_pretrain_ce*l2_norm_squared
+
+        pregrads_ce = T.grad(pre_ce_cost, self.params)
+        clip_grad = 5.0
+        pre_ce_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in pregrads_ce]
+
+        pre_ce_updates = lasagne.updates.rmsprop(pre_ce_cgrads, self.params, learning_rate=pre_ce_lr)
+
+        self.pre_ce_train_step = theano.function(
+            inputs=[self.x_inpt_single,self.x_inpt,lable_ce,pre_ce_lr,lmbda_l2_pretrain_ce,pre_ce_lmbda],
+            outputs=[pre_ce_cost],
+            on_unused_input='warn',
+            updates=pre_ce_updates)
+
+
 
     def show_para(self):
         for para in self.params:
