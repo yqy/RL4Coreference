@@ -15,7 +15,7 @@ import word2vec
 import DataGenerate
 import evaluation
 #import policy_network
-import policy_network_single as policy_network
+import policy_network_batch as policy_network
 import network_b as network
 #import network_batch as network
 import pretrain
@@ -137,7 +137,6 @@ def main():
         done_case_num = 0
 
         for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-        #for cases,gold_chain in DataGenerate.case_generater_trick(train_docs,"train",w2v):
 
             '''
             if add2train:
@@ -152,7 +151,7 @@ def main():
             this_reward = 0.0
             reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
 
-            for single, train, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
+            for train, single, mask, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
             #for single, train, action, reward , acp in policy_network.generate_policy_case_trick(cases,gold_chain,network_model):
 
                 norm_reward = reward - reward_b
@@ -161,7 +160,7 @@ def main():
 
                 #cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
                 #cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.000003)[0]
-                this_cost = network_model.train_step(single,train,action,reward,0.0001,l2_lambda)[0]
+                this_cost = network_model.train_step(single,train,mask,action,reward,0.0001,l2_lambda)[0]
                 #print this_cost,acp,reward
                 cost_this_turn += this_cost
 

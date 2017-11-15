@@ -218,7 +218,7 @@ def main():
     mask = [[1,1,0,1,1],[1,1,1,1,0]] 
     lable = [[1,1,0,1,1],[0,0,1,0,0]]
 
-    print r.predict(x_sinlge,zp_x,mask)
+    print r.predict(x_sinlge,zp_x,mask)[0]
     #print r.predict(zp_x)[0][0]
     #print r.predict(zp_x)[0][1]
     y = [1,3]
