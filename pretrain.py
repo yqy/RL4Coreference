@@ -37,21 +37,21 @@ def batch_generater_pretrain(train_case, gold_dict, max_batch_size = 64):
 
         this_lable_batch = []
         #for index in range(len(this_train_batch)):
-            for single_mention_array,this_train in this_train_batch:
-                if len(this_train) == 0:
-                    continue
-                length_of_this_train_case = len(this_train)
-                if length_of_this_train_case >= max_length:
-                    max_length = length_of_this_train_case
 
-                lables = [0]*(length_of_this_train_case+1)
-                index_in_chain = length_of_this_train_case
-                #if this_train_batch[index] has n candidates, means that this_train_batch[index] is the index-n mention (begin with 0) in mention list.
-                if gold_dict.has_key(index_in_chain):
-                    for j in gold_dict[index_in_chain]:
-                        if (j+1) < index_in_chain and j >= 0:
-                            lables[j+1] = 1
-                this_lable_batch.append(lables)
+        for single_mention_array,this_train in this_train_batch:
+            if len(this_train) == 0:
+                continue
+            length_of_this_train_case = len(this_train)
+            if length_of_this_train_case >= max_length:
+                max_length = length_of_this_train_case
+
+            lables = [0]*(length_of_this_train_case+1)
+            index_in_chain = length_of_this_train_case
+            if gold_dict.has_key(index_in_chain):
+                for j in gold_dict[index_in_chain]:
+                    if (j+1) < index_in_chain and j >= 0:
+                        lables[j+1] = 1
+            this_lable_batch.append(lables)
 
         train_batch_list = []
         single_batch_list = []
@@ -73,7 +73,7 @@ def batch_generater_pretrain(train_case, gold_dict, max_batch_size = 64):
 
             this_single_cas,this_train_cas = this_train_batch[i]
 
-            train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+            train_case_in_batch = list(this_train_cas) + (max_length - len(this_train_cas))*add_zeros
             train_batch_list.append(train_case_in_batch)
 
             single_batch_list.append(this_single_cas[0])
@@ -87,7 +87,7 @@ def batch_generater_pretrain(train_case, gold_dict, max_batch_size = 64):
         if len(lable_batch_list) == 0:
             continue
 
-        yield numpy.array(train_batch_list),numpy.array(single_batch_list),numpy.array(mask_batch_list),numpy.array(lable_batch_list)
+        yield numpy.array(train_batch_list,dtype = numpy.float32),numpy.array(single_batch_list,dtype = numpy.float32),numpy.array(mask_batch_list,dtype = numpy.int8),numpy.array(lable_batch_list,dtype = numpy.int8)
 
 def generater_pretrain(train_case, gold_dict):
 
@@ -149,7 +149,7 @@ def generate_pretrain_case_batch(train_case,gold_chain=[],network=None):
             gold_dict[item] = chain
 
     #return batch_generater_pretrain(train_case[1:],gold_dict)
-    return batch_generater_pretrain(train_case,gold_dict)
+    return batch_generater_pretrain(train_case[1:],gold_dict)
 
 #def generate_pretrain_case(doc_mention_arrays,doc_pair_arrays,gold_chain=[],network=None):
 def generate_pretrain_case(train_case,gold_chain=[],network=None):

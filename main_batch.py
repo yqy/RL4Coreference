@@ -40,10 +40,10 @@ def main():
     #network_model
     #net_dir = "./model/pretrain/network_model_pretrain.cn.0"
     if os.path.isfile("./model/network_model_batch."+args.language):
-        #read_f = file('./model/network_model.'+args.language, 'rb')
+        read_f = file('./model/network_model_batch.'+args.language, 'rb')
         #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
         #read_f = file('./model/network_model_pretrain.cn.best', 'rb')
-        read_f = file(net_dir, 'rb')
+        #read_f = file(net_dir, 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model_batch."+args.language
     else:
@@ -78,7 +78,7 @@ def main():
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
             if len(cases) >= 700:
                 continue
-            for single_mention_array,train_list,mask_list,lable_list in pretrain.generate_pretrain_case_batch(cases,gold_chain,network_model):
+            for train_list,single_mention_array,mask_list,lable_list in pretrain.generate_pretrain_case_batch(cases,gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,mask_list,lable_list,lr,l2_lambda)[0]
 
         end_time = timeit.default_timer()
@@ -91,7 +91,7 @@ def main():
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
             if len(cases) >= 700:
                 continue
-            for single_mention_array,train_list,mask_list,lable_list in pretrain.generate_pretrain_case_batch(cases,gold_chain,network_model):
+            for train_list,single_mention_array,mask_list,lable_list in pretrain.generate_pretrain_case_batch(cases,gold_chain,network_model):
                 cost_this_turn += network_model.pre_ce_train_step(single_mention_array,train_list,mask_list,lable_list,lr,l2_lambda,ce_lambda)[0]
 
         save_f = file('./model/pretrain_batch/network_model_pretrain.%s.%d'%(args.language,echo), 'wb')

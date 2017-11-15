@@ -38,7 +38,7 @@ class NetWork():
 
         #self.x_inpt = T.fmatrix("input_pair_embeddings")
         self.x_inpt = T.tensor3("input_pair_embeddings")
-        self.x_mask = T.matrix("mask")
+        self.x_mask = T.imatrix("mask")
 
         w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer_",special=True,ones=False) 
         self.params += [w_h_1,b_h_1]
@@ -155,7 +155,7 @@ class NetWork():
         lable_top = T.matrix()
         lmbda_l2_pretrain_top = T.fscalar("Reward")
 
-        pre_top_cost = T.mean((- T.max(T.log(self.classification_results + 1e-6 )*lable_top*self.x_mask,axis=1)\
+        pre_top_cost = T.mean(-T.max(T.log(self.classification_results + 1e-6 )*lable_top*self.x_mask,axis=1)\
                     - T.max(T.log(1-self.classification_results+ 1e-6 )*(1-lable_top)*self.x_mask,axis=1))\
                     + lmbda_l2_pretrain_top*l2_norm_squared
 
