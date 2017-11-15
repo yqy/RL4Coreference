@@ -115,7 +115,7 @@ def main():
     train4test = [] # add 5 items for testing the training performance
     add2train = True
 
-    ran_p = 0.00
+    ran_p = 0.05
     l2_lambda = 0.000003
     #l2_lambda = 0.0
     lr = 0.000002
@@ -144,8 +144,8 @@ def main():
             this_reward = 0.0
             reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
 
-            for single, train, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
-            #for single, train, action, reward , acp in policy_network.generate_policy_case_trick(cases,gold_chain,network_model,ran_p):
+            #for single, train, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
+            for single, train, action, reward , acp in policy_network.generate_policy_case_trick(cases,gold_chain,network_model,ran_p):
 
                 norm_reward = reward - reward_b
 

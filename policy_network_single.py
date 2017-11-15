@@ -43,8 +43,8 @@ def choose_action(action_probability):
 
 def get_reward(cluster_info,gold_info,max_cluster_num):
     ev_document = get_evaluation_document(cluster_info,gold_info,max_cluster_num)
-    #p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
-    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.muc)
+    p,r,f = evaluation.evaluate_documents([ev_document],evaluation.b_cubed)
+    #p,r,f = evaluation.evaluate_documents([ev_document],evaluation.muc)
     #print >> sys.stderr, p,r,f
     return f
 
