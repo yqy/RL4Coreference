@@ -154,9 +154,19 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
 
         cluster_info.append(should_cluster)
 
-        this_reward = get_reward_trick(cluster_info,gold_dict,new_cluster_num)
+        #this_reward = get_reward_trick(cluster_info,gold_dict,new_cluster_num)
         #print this_reward
-        reward_list.append(this_reward)
+        #reward_list.append(this_reward)
+
+    for i in range(len(cluster_info)):
+        this_cluster = cluster_info[i]
+        fake_reward = []
+        for nc in range(this_cluster):
+            new_cluster_info = cluster_info[:i] + [nc] + cluster_info[i+1:]
+            average_fake_reward.append(new_cluster_info,gold_chain,new_cluster_num)
+        average_reward = 0.0 if len(average_fake_reward) == 0 else sum(average_fake_reward)/float(len(average_fake_reward))
+
+        reward_list.append(average_reward)
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
 
@@ -169,7 +179,7 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
         if len(tc) == 0:
             continue
         #yield single, tc, actions[i], reward, action_p[i]
-        yield single, tc, actions[i], reward+reward_list[i], action_p[i]
+        yield single, tc, actions[i], reward-reward_list[i], action_p[i]
 
     #for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:
     #    yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
