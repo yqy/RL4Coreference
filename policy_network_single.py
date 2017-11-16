@@ -48,6 +48,23 @@ def get_reward(cluster_info,gold_info,max_cluster_num):
     #print >> sys.stderr, p,r,f
     return f
 
+def get_reward_average(cluster_info,gold_info,max_cluster_num,index,max_cluster_index):
+    # build new cluster
+    new_cluster_prefix = cluster_info[:index]
+    new_cluster_postfix = cluster_info[index+1:]
+
+    el = []
+    
+    for cluster_num in range(max_cluster_index):
+        new_cluster_info = new_cluster_prefix + [cluster_num] + new_cluster_postfix 
+        ev_document = get_evaluation_document(new_cluster_info,gold_info,max_cluster_num)
+        el.append(ev_document)
+    p,r,f = evaluation.evaluate_documents(el,evaluation.b_cubed)
+    #p,r,f = evaluation.evaluate_documents([ev_document],evaluation.muc)
+    #print >> sys.stderr, p,r,f
+    return f
+
+
 def get_reward_trick(cluster_info,gold_dict,max_cluster_num):
     this_cluster = cluster_info[-1]
     this_index = len(cluster_info)-1
@@ -165,16 +182,6 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
         #print this_reward
         #reward_list.append(this_reward)
 
-    for i in range(len(cluster_info)):
-        this_cluster = cluster_info[i]
-        average_fake_reward = []
-        for nc in range(max_cluster_at_t[i]):
-            new_cluster_info = cluster_info[:i] + [nc] + cluster_info[i+1:]
-            average_fake_reward.append(get_reward(new_cluster_info,gold_chain,new_cluster_num))
-        average_reward = 0.0 if len(average_fake_reward) == 0 else sum(average_fake_reward)/float(len(average_fake_reward))
-
-        reward_list.append(average_reward)
-
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
 
     indexs = range(len(actions))
@@ -185,8 +192,9 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
         single,tc = train_case[i]
         if len(tc) == 0:
             continue
+        imm_reward = get_reward_average(cluster_info,gold_chain,new_cluster_num,i,max_cluster_at_t[i])
         #yield single, tc, actions[i], reward, action_p[i]
-        yield single, tc, actions[i], reward-reward_list[i], action_p[i]
+        yield single, tc, actions[i], reward-imm_reward, action_p[i]
 
     #for train_batch_list, mask_batch_list, action_batch_list in items_in_batch:
     #    yield train_batch_list, mask_batch_list, action_batch_list, [reward]*len(train_batch_list)
