@@ -170,8 +170,6 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
         average_fake_reward = []
         for nc in range(max_cluster_at_t[i]):
             new_cluster_info = cluster_info[:i] + [nc] + cluster_info[i+1:]
-            #print this_cluster
-            #print new_cluster_info
             average_fake_reward.append(get_reward(new_cluster_info,gold_chain,new_cluster_num))
         average_reward = 0.0 if len(average_fake_reward) == 0 else sum(average_fake_reward)/float(len(average_fake_reward))
 
