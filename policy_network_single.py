@@ -76,11 +76,16 @@ def get_reward_trick(cluster_info,gold_dict,max_cluster_num):
 
 def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     predict = []
-    for i in range(max_cluster_num):
-        predict.append([])
+    predict_dict = {}
+    #for i in range(max_cluster_num):
+    #    predict.append([])
     for mention_num in range(len(cluster_info)):
         cluster_num = cluster_info[mention_num]
-        predict[cluster_num].append(mention_num)
+        predict_dict.setdefault(cluster_num,[])
+        predict_dict[cluster_num].append(mention_num)
+        #predict[cluster_num].append(mention_num)
+    for k in sorted(predict_dict.keys()):
+        predict.append(predict_dict[k])
     ev_document = evaluation.EvaluationDocument(gold_info,predict)
     return ev_document
 
@@ -130,6 +135,7 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
     actions = []
     action_p = []
     reward_list = []
+    max_cluster_at_t = []
 
     gold_dict = {}
     for cs in gold_chain:
@@ -153,6 +159,7 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
             should_cluster = cluster_info[action-1]
 
         cluster_info.append(should_cluster)
+        max_cluster_at_t.append(new_cluster_num)
 
         #this_reward = get_reward_trick(cluster_info,gold_dict,new_cluster_num)
         #print this_reward
@@ -160,10 +167,12 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
 
     for i in range(len(cluster_info)):
         this_cluster = cluster_info[i]
-        fake_reward = []
-        for nc in range(this_cluster):
+        average_fake_reward = []
+        for nc in range(max_cluster_at_t[i]):
             new_cluster_info = cluster_info[:i] + [nc] + cluster_info[i+1:]
-            average_fake_reward.append(new_cluster_info,gold_chain,new_cluster_num)
+            #print this_cluster
+            #print new_cluster_info
+            average_fake_reward.append(get_reward(new_cluster_info,gold_chain,new_cluster_num))
         average_reward = 0.0 if len(average_fake_reward) == 0 else sum(average_fake_reward)/float(len(average_fake_reward))
 
         reward_list.append(average_reward)
