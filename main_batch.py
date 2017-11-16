@@ -63,13 +63,14 @@ def main():
     dev_docs = DataGenerate.doc_data_generater("dev")
     test_docs = DataGenerate.doc_data_generater("test")
 
+
     #pretrain
     l2_lambda = 0.0000003
     lr = 0.00002
     ce_lambda = 0.005
 
     times = 0
-    for echo in range(1):
+    for echo in range(10):
 
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
@@ -80,12 +81,16 @@ def main():
                 continue
             for train_list,single_mention_array,mask_list,lable_list in pretrain.generate_pretrain_case_batch(cases,gold_chain,network_model):
                 cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,mask_list,lable_list,lr,l2_lambda)[0]
-
         end_time = timeit.default_timer()
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
         print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
 
-    for echo in range(20):
+        save_f = file('./model/pretrain_batch/network_model_pretrain_noNorm.%s.%d'%(args.language,echo), 'wb')
+        cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+        save_f.close()
+
+
+    for echo in range(10):
         start_time = timeit.default_timer()
         cost_this_turn = 0.0
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
@@ -122,31 +127,32 @@ def main():
     print "#################################################" 
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
-
-    return
-
     ##train
     train4test = [] # add 5 items for testing the training performance
     add2train = True
 
-    for echo in range(20):
+    for echo in range(10):
         start_time = timeit.default_timer()
         reward_baseline = []
         cost_this_turn = 0.0
         average_reward = 0.0
         done_case_num = 0
 
-        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        l2_lambda = 0.000003
+        lr = 0.000009
+        ce_lambda = 0.000001
 
-            '''
+        for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
+            if len(cases) >= 700:
+                continue
+
             if add2train:
-                #if random.randint(1,200) == 10:
-                if not random.randint(1,200) == 10:
+                if random.randint(1,200) == 10:
+                #if not random.randint(1,200) == 10:
                     #train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
                     train4test.append((cases,gold_chain))
-                    if len(train4test) == 5:
+                    if len(train4test) == 20:
                         add2train = False
-            '''
 
             this_reward = 0.0
             reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
@@ -157,18 +163,16 @@ def main():
                 norm_reward = reward - reward_b
 
                 this_reward = reward
-
-                #cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
-                #cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.000003)[0]
-                this_cost = network_model.train_step(single,train,mask,action,reward,0.0001,l2_lambda)[0]
+                
+                this_cost = network_model.train_step(single,train,mask,action,reward,lr,l2_lambda,ce_lambda)[0]
                 #print this_cost,acp,reward
                 cost_this_turn += this_cost
 
             average_reward += this_reward
             done_case_num += 1
 
-            if done_case_num >= 1:
-                break
+            #if done_case_num >= 1:
+            #    break
         print network_model.get_weight_sum()
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
@@ -179,7 +183,6 @@ def main():
         if len(reward_baseline) >= 64:
             reward_baselin = reward_baseline[1:]
 
-        ''' 
         ## test training performance
         train_docs_for_test = []
         start_time = timeit.default_timer()
@@ -200,8 +203,6 @@ def main():
         ## dev
         dev_docs_for_test = []
         start_time = timeit.default_timer()
-        #for dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain in DataGenerate.array_generater(dev_docs,"dev",w2v):
-            #ev_doc = policy_network.generate_policy_test(dev_doc_mention_array,dev_doc_pair_array,dev_doc_gold_chain,network_model)
         for dev_cases,dev_doc_gold_chain in DataGenerate.case_generater(dev_docs,"dev",w2v):
             ev_doc = policy_network.generate_policy_test(dev_cases,dev_doc_gold_chain,network_model)
             dev_docs_for_test.append(ev_doc)
@@ -238,10 +239,9 @@ def main():
         print >> sys.stderr, "TEST Use %.3f seconds"%(end_time-start_time)
         sys.stdout.flush()
 
-        save_f = file('./model/nets/network_model.%s.%d'%(args.language,echo), 'wb')
+        save_f = file('./model/nets/network_model_batch.%s.%d'%(args.language,echo), 'wb')
         cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
-        '''
 
 if __name__ == "__main__":
     main()

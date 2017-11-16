@@ -165,11 +165,11 @@ def batch_generater(train_case, max_batch_size = 1):
 
         for i in range(len(this_train_batch)):
             this_single_cas, this_train_cas = this_train_batch[i]
-            train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
-            mask_in_batch = [1] + [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
+            train_case_in_batch = this_train_cas #+ (max_length - len(this_train_cas))*add_zeros
+            mask_in_batch = [1] + [1]*len(this_train_cas)# + [0]*(max_length - len(this_train_cas))
 
             mask_batch_list.append(mask_in_batch)
-            single_batch_list.append(this_single_cas)
+            single_batch_list.append(this_single_cas[0])
             train_batch_list.append(train_case_in_batch)
 
         yield numpy.array(train_batch_list,dtype = numpy.float32),numpy.array(single_batch_list,dtype = numpy.float32),numpy.array(mask_batch_list,dtype = numpy.int8)
@@ -197,8 +197,6 @@ def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
         if len(this_index_batch) < 1:
             continue
 
-        this_train_batch = train_case[start:end]
-
         train_batch_list = []
         single_batch_list = []
         mask_batch_list = []
@@ -206,16 +204,16 @@ def batch_generater_shuffle(train_case, actions, max_batch_size = 128):
 
         max_length = max([len(train_case[x][1]) for x in this_index_batch])
 
-        for i in this_train_batch:
+        for index in this_index_batch:
 
-            this_single_cas, this_train_cas = this_train_batch[i]
-            train_case_in_batch = this_train_cas + (max_length - len(this_train_cas))*add_zeros
+            this_single_cas, this_train_cas = train_case[index]
+            train_case_in_batch = list(this_train_cas) + (max_length - len(this_train_cas))*add_zeros
             mask_in_batch = [1] + [1]*len(this_train_cas) + [0]*(max_length - len(this_train_cas))
 
             mask_batch_list.append(mask_in_batch)
-            single_batch_list.append(this_single_cas)
+            single_batch_list.append(this_single_cas[0])
             train_batch_list.append(train_case_in_batch)
-            action_batch_list.append(actions[i])
+            action_batch_list.append(actions[index])
 
         yield numpy.array(train_batch_list,dtype = numpy.float32),numpy.array(single_batch_list,dtype = numpy.float32),numpy.array(mask_batch_list,dtype = numpy.int8),numpy.array(action_batch_list,dtype = numpy.int8)
 

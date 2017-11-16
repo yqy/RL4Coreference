@@ -42,9 +42,9 @@ def main():
     if os.path.isfile("./model/network_model."+args.language):
         #read_f = file('./model/network_model.'+args.language, 'rb')
         #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
+        print >> sys.stderr,"Read model from ./model/network_model."+args.language
         read_f = file(net_dir, 'rb')
         network_model = cPickle.load(read_f)
-        print >> sys.stderr,"Read model from ./model/network_model."+args.language
     else:
         inpt_dimention = 1738
         single_dimention = 855
