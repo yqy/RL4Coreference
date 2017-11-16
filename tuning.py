@@ -118,7 +118,7 @@ def main():
     ran_p = 0.05
     l2_lambda = 0.000003
     #l2_lambda = 0.0
-    lr = 0.000002
+    lr = 0.00002
     #lr = 0.0
     #lr = 0.0001
     ce_lmbda = 0.0000001

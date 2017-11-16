@@ -53,7 +53,11 @@ def get_reward_trick(cluster_info,gold_dict,max_cluster_num):
     this_index = len(cluster_info)-1
     if this_index in gold_dict:
         if this_cluster == (max_cluster_num-1): # it is a new cluster
-            reward = 0.0
+            reward = 1.0
+            for ids in gold_dict[this_index]:
+                if ids < this_index:
+                    reward = 0.0
+                    break
         else:
             al = 0
             right = 0
@@ -68,7 +72,7 @@ def get_reward_trick(cluster_info,gold_dict,max_cluster_num):
             reward = 1.0
         else:
             reward = 0.0
-    return reward
+    return reward*0.5
 
 def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     predict = []
@@ -151,7 +155,7 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
         cluster_info.append(should_cluster)
 
         this_reward = get_reward_trick(cluster_info,gold_dict,new_cluster_num)
-        print this_reward
+        #print this_reward
         reward_list.append(this_reward)
 
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
