@@ -38,12 +38,12 @@ def main():
     w2v = word2vec.Word2Vec(embedding_dir,embedding_dimention)
 
     #network_model
-    #net_dir = "./model/pretrain/network_model_pretrain.cn.0"
+    net_dir = "./model/pretrain_batch/network_model_pretrain.cn.9"
     if os.path.isfile("./model/network_model_batch."+args.language):
-        read_f = file('./model/network_model_batch.'+args.language, 'rb')
+        #read_f = file('./model/network_model_batch.'+args.language, 'rb')
         #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
         #read_f = file('./model/network_model_pretrain.cn.best', 'rb')
-        #read_f = file(net_dir, 'rb')
+        read_f = file(net_dir, 'rb')
         network_model = cPickle.load(read_f)
         print >> sys.stderr,"Read model from ./model/network_model_batch."+args.language
     else:
@@ -70,7 +70,7 @@ def main():
     ce_lambda = 0.005
 
     times = 0
-    for echo in range(10):
+    for echo in range(0):
 
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
@@ -90,7 +90,7 @@ def main():
         save_f.close()
 
 
-    for echo in range(10):
+    for echo in range(0):
         start_time = timeit.default_timer()
         cost_this_turn = 0.0
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
@@ -139,8 +139,8 @@ def main():
         done_case_num = 0
 
         l2_lambda = 0.000003
-        lr = 0.000009
-        ce_lambda = 0.000001
+        lr = 0.000002
+        ce_lambda = 0.0
 
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
             if len(cases) >= 700:
@@ -158,13 +158,16 @@ def main():
             reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
 
             for train, single, mask, action, reward in policy_network.generate_policy_case(cases,gold_chain,network_model):
+
+                if len(train) <= 1:
+                    continue
             #for single, train, action, reward , acp in policy_network.generate_policy_case_trick(cases,gold_chain,network_model):
 
                 norm_reward = reward - reward_b
 
                 this_reward = reward
                 
-                this_cost = network_model.train_step(single,train,mask,action,reward,lr,l2_lambda,ce_lambda)[0]
+                this_cost = network_model.train_step(single,train,mask,action,reward*100,lr,l2_lambda,ce_lambda)[0]
                 #print this_cost,acp,reward
                 cost_this_turn += this_cost
 

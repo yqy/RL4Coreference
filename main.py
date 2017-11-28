@@ -38,7 +38,8 @@ def main():
     w2v = word2vec.Word2Vec(embedding_dir,embedding_dimention)
 
     #network_model
-    net_dir = "./model/pretrain/network_model_pretrain.cn.0"
+    #net_dir = "./model/pretrain/network_model_pretrain.cn.19"
+    net_dir = "./model/nets/network_model.cn.2"
     if os.path.isfile("./model/network_model."+args.language):
         #read_f = file('./model/network_model.'+args.language, 'rb')
         #read_f = file('./model/network_model_pretrain.'+args.language, 'rb')
@@ -69,7 +70,7 @@ def main():
     ce_lambda = 0.005
 
     times = 0
-    for echo in range(1):
+    for echo in range(0):
 
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
@@ -87,7 +88,7 @@ def main():
         print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
         print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
 
-    for echo in range(20):
+    for echo in range(0):
         start_time = timeit.default_timer()
         cost_this_turn = 0.0
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
@@ -125,31 +126,36 @@ def main():
     sys.stdout.flush()
     print >> sys.stderr,"Pre Train done"
 
-    return
-
     ##train
     train4test = [] # add 5 items for testing the training performance
     add2train = True
 
-    for echo in range(20):
+    #lr = 0.000002
+    lr = 0.000009
+    ce_lmbda = 0.0000001
+    l2_lambda = 0.000001
+
+    for echo in range(30):
+
+        if (echo+1) % 10 == 0:
+            lr = lr*0.6
+
         start_time = timeit.default_timer()
         reward_baseline = []
         cost_this_turn = 0.0
         average_reward = 0.0
         done_case_num = 0
 
-        for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
-        #for cases,gold_chain in DataGenerate.case_generater_trick(train_docs,"train",w2v):
+        #for train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain in DataGenerate.array_generater(train_docs,"train",w2v):
+        for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
 
-            '''
             if add2train:
-                #if random.randint(1,200) == 10:
-                if not random.randint(1,200) == 10:
+                if random.randint(1,200) == 10:
+                #if not random.randint(1,200) == 10:
                     #train4test.append((train_doc_mention_array,train_doc_pair_array,train_doc_gold_chain))
                     train4test.append((cases,gold_chain))
-                    if len(train4test) == 5:
+                    if len(train4test) == 50:
                         add2train = False
-            '''
 
             this_reward = 0.0
             reward_b = 0 if len(reward_baseline) < 1 else float(sum(reward_baseline))/float(len(reward_baseline))
@@ -163,15 +169,16 @@ def main():
 
                 #cost_this_turn += network_model.train_step(single,train,action,reward,0.00001)[0]
                 #cost_this_turn += network_model.train_step(single,train,action,norm_reward,0.000003)[0]
-                this_cost = network_model.train_step(single,train,action,reward,0.0001,l2_lambda)[0]
+                this_cost = network_model.train_step(single,train,action,reward,lr,l2_lambda,ce_lmbda)[0]
                 #print this_cost,acp,reward
                 cost_this_turn += this_cost
 
             average_reward += this_reward
             done_case_num += 1
 
-            if done_case_num >= 1:
-                break
+            #if done_case_num >= 1:
+            #    break
+
         print network_model.get_weight_sum()
         end_time = timeit.default_timer()
         print >> sys.stderr, "Total cost:",cost_this_turn
@@ -182,7 +189,6 @@ def main():
         if len(reward_baseline) >= 64:
             reward_baselin = reward_baseline[1:]
 
-        ''' 
         ## test training performance
         train_docs_for_test = []
         start_time = timeit.default_timer()
@@ -244,7 +250,6 @@ def main():
         save_f = file('./model/nets/network_model.%s.%d'%(args.language,echo), 'wb')
         cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
         save_f.close()
-        '''
 
 if __name__ == "__main__":
     main()

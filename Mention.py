@@ -99,7 +99,7 @@ class Document():
                 self.sentences.append([x.encode('utf-8') for x in sentence])
             else:
                 self.sentences.append(sentence)
-        for sentence in self.document_words:
+        for sentence in self.sentences:
             self.document_words += sentence
 
         ## build mentions

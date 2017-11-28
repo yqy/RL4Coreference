@@ -55,13 +55,14 @@ def get_evaluation_document(cluster_info,gold_info,max_cluster_num):
     for mention_num in range(len(cluster_info)):
         cluster_num = cluster_info[mention_num]
         predict[cluster_num].append(mention_num)
-    
+    '''    
     print "a"
     for s in predict:
         if len(s) > 1:
             print s
     print
     print gold_info 
+    '''
 
     ev_document = evaluation.EvaluationDocument(gold_info,predict)
     return ev_document
@@ -262,7 +263,6 @@ def generate_policy_case(train_case,gold_chain=[],network=None):
 
         cluster_info.append(should_cluster)
 
-    print "haha"
     reward = get_reward(cluster_info,gold_chain,new_cluster_num)
 
     #for i in indexs:
