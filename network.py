@@ -39,86 +39,61 @@ class NetWork():
 
         w_h_1,b_h_1 = init_weight(n_inpt,n_hidden,pre="inpt_layer_",special=False,ones=False) 
         self.params += [w_h_1,b_h_1]
-
-        self.hidden_layer_1 = activate(T.dot(self.x_inpt,w_h_1) + b_h_1)
-        self.hidden_layer_1_dropout = dropout_from_layer(self.hidden_layer_1,dropout_prob)
-
         w_h_2,b_h_2 = init_weight(n_hidden,n_hidden/2,pre="hidden_layer_1_",special=False,ones=False) 
         self.params += [w_h_2,b_h_2]
-
-        self.hidden_layer_2_ = activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2)
-        self.hidden_layer_2_dropout_ = dropout_from_layer(activate(T.dot(self.hidden_layer_1_dropout,w_h_2) + b_h_2),dropout_prob)
-
         w_h_2_,b_h_2_ = init_weight(n_hidden/2,n_hidden/2,pre="hidden_layer_2_",special=False,ones=False) 
         self.params += [w_h_2_,b_h_2_]
-
-        self.hidden_layer_2 = activate(T.dot(self.hidden_layer_2_,w_h_2_) + b_h_2_)
-        self.hidden_layer_2_dropout = dropout_from_layer(activate(T.dot(self.hidden_layer_2_dropout_,w_h_2_) + b_h_2_),dropout_prob)
-
         w_h_3,b_h_3 = init_weight(n_hidden/2,1,pre="output_layer_",special=False,ones=False) 
         self.params += [w_h_3,b_h_3]
 
+        self.hidden_layer_1 = dropout_from_layer(activate(T.dot(dropout_from_layer(self.x_inpt,dropout_prob),w_h_1) + b_h_1),dropout_prob)
+        self.hidden_layer_2_ = dropout_from_layer(activate(T.dot(self.hidden_layer_1,w_h_2) + b_h_2),dropout_prob)
+        self.hidden_layer_2 = dropout_from_layer(activate(T.dot(self.hidden_layer_2_,w_h_2_) + b_h_2_),dropout_prob)
         self.output_layer = (T.dot(self.hidden_layer_2,w_h_3) + b_h_3).flatten()
-        self.output_layer_dropout = (T.dot(self.hidden_layer_2_dropout,w_h_3) + b_h_3).flatten()
-        #self.output_layer = activate(T.dot(self.hidden_layer_2,w_h_3) + b_h_3).flatten()
+
 
         ## for single
         self.x_inpt_single = T.fmatrix("input_single_embeddings")
 
         w_h_1_single,b_h_1_single = init_weight(n_single,n_hidden,pre="inpt_single_layer_",special=False,ones=False) 
         self.params += [w_h_1_single,b_h_1_single]
-
-        self.hidden_layer_1_sinlge = activate(T.dot(self.x_inpt_single,w_h_1_single) + b_h_1_single)
-        self.hidden_layer_1_sinlge_dropout = dropout_from_layer(self.hidden_layer_1_sinlge,dropout_prob)
-
         w_h_2_single,b_h_2_single = init_weight(n_hidden,n_hidden/2,pre="hidden_single_layer_1_",special=False,ones=False) 
         self.params += [w_h_2_single,b_h_2_single]
-        self.hidden_layer_2_single_ = activate(T.dot(self.hidden_layer_1_sinlge,w_h_2_single) + b_h_2_single)
-        #self.hidden_layer_2_single_ = activate(T.dot(self.hidden_layer_1_sinlge,w_h_2) + b_h_2)
-        self.hidden_layer_2_single_dropout_ = dropout_from_layer(activate(T.dot(self.hidden_layer_1_sinlge_dropout,w_h_2_single) + b_h_2_single),dropout_prob)
-
         w_h_2_single_,b_h_2_single_ = init_weight(n_hidden/2,n_hidden/2,pre="hidden_single_layer_2_",special=False,ones=False) 
         self.params += [w_h_2_single_,b_h_2_single_]
-        self.hidden_layer_2_single = activate(T.dot(self.hidden_layer_2_single_,w_h_2_single_) + b_h_2_single_)
-        #self.hidden_layer_2_single = activate(T.dot(self.hidden_layer_2_single_,w_h_2_) + b_h_2_)
-        self.hidden_layer_2_single_dropout = dropout_from_layer(activate(T.dot(self.hidden_layer_2_single_dropout_,w_h_2_single_) + b_h_2_single_),dropout_prob)
-
         w_h_3_single,b_h_3_single = init_weight(n_hidden/2,1,pre="output_single_layer_",special=False,ones=False) 
         self.params += [w_h_3_single,b_h_3_single]
+
+        self.hidden_layer_1_sinlge = dropout_from_layer(activate(T.dot(dropout_from_layer(self.x_inpt_single,dropout_prob),w_h_1_single) + b_h_1_single),dropout_prob)
+        self.hidden_layer_2_single_ = dropout_from_layer(activate(T.dot(self.hidden_layer_1_sinlge,w_h_2_single) + b_h_2_single),dropout_prob)
+        self.hidden_layer_2_single = dropout_from_layer(activate(T.dot(self.hidden_layer_2_single_,w_h_2_single_) + b_h_2_single_),dropout_prob)
         self.output_layer_single = (T.dot(self.hidden_layer_2_single,w_h_3_single) + b_h_3_single).flatten()
-        self.output_layer_single_dropout = (T.dot(self.hidden_layer_2_single_dropout,w_h_3_single) + b_h_3_single).flatten()
+
+        self.anaphoricity = sigmoid(self.output_layer_single)
 
         self.output_layer_all = T.concatenate((self.output_layer_single,self.output_layer))
-        self.output_layer_all_dropout = T.concatenate((self.output_layer_single_dropout,self.output_layer_dropout))
 
         self.policy = softmax(self.output_layer_all)[0]
-        self.policy_dropout = softmax(self.output_layer_all_dropout)[0]
 
         self.predict = theano.function(
-            inputs=[self.x_inpt_single,self.x_inpt],
+            inputs=[self.x_inpt_single,self.x_inpt,dropout_prob],
             outputs=[self.policy],
-            #allow_input_downcast=True,
             on_unused_input='warn')
 
         lr = T.fscalar()
         Reward = T.fscalar("Reward")
         y = T.iscalar('classification')
-        ce_lmbda = T.fscalar("cross_entropy_loss")
 
-        l2_norm_squared = sum([(abs(w)).sum() for w in self.params])
-        #lmbda_l2 = 0.0000003
+        l2_norm_squared = sum([w*w for w in self.params])
         lmbda_l2_train = T.fscalar("Reward")
 
         self.get_weight_sum = theano.function(inputs=[],outputs=[l2_norm_squared])
 
-        cost = (-Reward) * T.log(self.policy_dropout[y] + 1e-12)\
-                + ce_lmbda * T.sum(self.policy_dropout*T.log(self.policy_dropout + 1e-12))\
+        cost = (-Reward) * T.log(self.policy[y] + 1e-12)\
                 + lmbda_l2_train*l2_norm_squared
 
         grads = T.grad(cost, self.params)
-        #grads = [lasagne.updates.norm_constraint(grad, max_norm, range(grad.ndim)) for grad in grads]
-        #updates = lasagne.updates.rmsprop(grads, self.params, learning_rate=0.0001)
-        clip_grad = 5.0
+        clip_grad = 1.0
         cgrads = [T.clip(g,-clip_grad, clip_grad) for g in grads]
         #updates = lasagne.updates.rmsprop(cgrads, self.params, learning_rate=lr)
         updates = lasagne.updates.adadelta(cgrads, self.params, learning_rate=lr)
@@ -130,21 +105,18 @@ class NetWork():
             updates=updates)
 
         self.classification_results = sigmoid(self.output_layer_all)
-        self.classification_results_dropout = sigmoid(self.output_layer_all_dropout)
-        #self.classification_results = self.policy
 
         pre_lr = T.fscalar()
         lable = T.ivector()
         lmbda_l2_pretrain = T.fscalar("Reward")
 
         pre_cost = (- T.sum(T.log(self.classification_results_dropout + 1e-12 )*lable)\
-                    - T.sum(T.log(1-self.classification_results+ 1e-12 )*(1-lable)))\
+                    - T.sum(T.log(1-self.classification_results+ 1e-12 )*(1-lable)))/(T.sum(lable) + T.sum(1-lable))\
                     + lmbda_l2_pretrain*l2_norm_squared
                     #- T.sum(T.log(1-self.classification_results_dropout+ 1e-12 )*(1-lable)))/(T.sum(lable) + T.sum(1-lable))\
 
         pregrads = T.grad(pre_cost, self.params)
         pre_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in pregrads]
-
         #pre_updates = lasagne.updates.rmsprop(pre_cgrads, self.params, learning_rate=pre_lr)
         pre_updates = lasagne.updates.adadelta(pre_cgrads, self.params, learning_rate=pre_lr)
 
@@ -176,38 +148,61 @@ class NetWork():
             updates=pre_top_updates)
 
         self.pre_predict = theano.function(
-            inputs=[self.x_inpt_single,self.x_inpt,lable],
+            inputs=[self.x_inpt_single,self.x_inpt,dropout_prob],
             outputs=[self.classification_results],
             on_unused_input='warn')
 
         self.score_predict = theano.function(
-            inputs=[self.x_inpt_single,self.x_inpt,lable],
+            inputs=[self.x_inpt_single,self.x_inpt,dropout_prob],
             outputs=[self.output_layer_all],
             on_unused_input='warn')
 
+        ## anaphoricity
+        ana_lr = T.fscalar()
+        ana_y = T.iscalar('ana_classification')
+        ana_lmbda_l2 = T.fscalar("Reward")
 
-        # cross-entropy
-        pre_ce_lr = T.fscalar()
-        lable_ce = T.ivector()
-        lmbda_l2_pretrain_ce = T.fscalar("Reward")
-        pre_ce_lmbda = T.fscalar()
+        # corss-entropy for anaphoricity detection
+        ana_cost = ana_y*T.log(self.anaphoricity + 1e-12)\
+                + (1-ana_y)*T.log(1-self.anaphoricity + 1e-12)
+                + ana_lmbda_l2*l2_norm_squared
 
-        pre_ce_cost = (- T.sum(T.log(self.policy + 1e-12 )*lable_ce)\
-                    - T.sum(T.log(1-self.policy+ 1e-12 )*(1-lable_ce)))/(T.sum(lable_ce) + T.sum(1-lable_ce))\
-                    + pre_ce_lmbda * T.sum(self.policy*T.log(self.policy + 1e-12))\
-                    + lmbda_l2_pretrain_ce*l2_norm_squared
+        ana_grads = T.grad(ana_cost, self.params)
+        ana_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in ana_grads]
+        ana_updates = lasagne.updates.adadelta(ana_cgrads, self.params, learning_rate=ana_lr)
 
-        pregrads_ce = T.grad(pre_ce_cost, self.params)
-        pre_ce_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in pregrads_ce]
-
-        #pre_ce_updates = lasagne.updates.rmsprop(pre_ce_cgrads, self.params, learning_rate=pre_ce_lr)
-        pre_ce_updates = lasagne.updates.adadelta(pre_ce_cgrads, self.params, learning_rate=pre_ce_lr)
-
-        self.pre_ce_train_step = theano.function(
-            inputs=[self.x_inpt_single,self.x_inpt,lable_ce,pre_ce_lr,lmbda_l2_pretrain_ce,pre_ce_lmbda],
-            outputs=[pre_ce_cost],
+        self.ana_train_step = theano.function(
+            inputs=[self.x_inpt_single,ana_y,ana_lr,ana_lmbda_l2,dropout_prob],
+            outputs=[ana_cost,self.anaphoricity],
             on_unused_input='warn',
-            updates=pre_ce_updates)
+            updates=updates)
+
+        self.x_single_mention_pair = T.fvector("input_pair_embeddings")
+        self.mention_hidden_layer_1 = dropout_from_layer(activate(T.dot(dropout_from_layer(self.x_single_mention_pair,dropout_prob),w_h_1) + b_h_1),dropout_prob)
+        self.mention_hidden_layer_2_ = dropout_from_layer(activate(T.dot(self.mention_hidden_layer_1,w_h_2) + b_h_2),dropout_prob)
+        self.mention_hidden_layer_2 = dropout_from_layer(activate(T.dot(self.mention_hidden_layer_2_,w_h_2_) + b_h_2_),dropout_prob)
+        self.mention_score = sigmoid(T.dot(self.mention_hidden_layer_2,w_h_3) + b_h_3)
+
+        mention_lr = T.fscalar()
+        mention_y = T.iscalar('ana_classification')
+        mention_lmbda_l2 = T.fscalar("Reward")
+
+        # corss-entropy for mention score
+        ana_cost = mention_y*T.log(self.mention_score + 1e-12)\
+                + (1-mention_y)*T.log(1-self.mention_score + 1e-12)
+                + mention_lmbda_l2*l2_norm_squared
+
+        mention_grads = T.grad(mention_cost, self.params)
+        mention_cgrads = [T.clip(g,-clip_grad, clip_grad) for g in mention_grads]
+        mention_updates = lasagne.updates.adadelta(mention_cgrads, self.params, learning_rate=mention_lr)
+
+        self.mention_train_step = theano.function(
+            inputs=[self.x_single_mention_pair,mention_y,mention_lr,mention_lmbda_l2,dropout_prob],
+            outputs=[mention_cost,self.mention_score],
+            on_unused_input='warn',
+            updates=updates)
+
+
 
     def show_para(self):
         for para in self.params:

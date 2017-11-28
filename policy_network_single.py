@@ -49,7 +49,7 @@ def sample_action_mask(action_probability,single,tc,network):
     if len(tc) == 0:
         return 0
 
-    prbs = network.score_predict(single,tc,[])
+    prbs = network.score_predict(single,tc,0.0)
     acp = []
 
     print prbs
@@ -208,7 +208,7 @@ def generate_policy_case_trick(train_case,gold_chain=[],network=None,ran_p = 0.0
         if len(tc) == 0:
             action_probability = numpy.array([1])
         else:
-            action_probability = network.predict(single,tc)[0]
+            action_probability = network.predict(single,tc,0.0)[0]
         action = sample_action_trick(action_probability,ran_p)
         action_p.append(action_probability[action])
         #action = choose_action(action_probability)
@@ -279,7 +279,7 @@ def generate_policy_case(train_case,gold_chain=[],network=None,pt=0.1):
         if len(tc) == 0:
             action_probability = numpy.array([1])
         else:
-            action_probability = network.predict(single,tc)[0]
+            action_probability = network.predict(single,tc,0.0)[0]
         #print action_probability
         #action = sample_action_mask(action_probability,single,tc,network)
         action = sample_action(action_probability)
@@ -335,7 +335,7 @@ def generate_policy_test(train_case,gold_chain=[],network=None):
         if len(tc) == 0:
             action_probability = [1]
         else:
-            action_probability = list(network.predict(single,tc)[0])
+            action_probability = list(network.predict(single,tc,0.0)[0])
         action = choose_action(action_probability)
 
         if (action-1) == -1: # -1 means a new cluster

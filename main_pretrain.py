@@ -74,7 +74,7 @@ def main():
 
     times = 0
     #for echo in range(11,40):
-    for echo in range(30):
+    for echo in range(10):
 
         start_time = timeit.default_timer()
         print "Pretrain ECHO:",echo
@@ -83,6 +83,67 @@ def main():
         done_num = 0
         pos_num = 0
         neg_num = 0
+        for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
+            if len(cases) >= 700:
+                continue
+            for single_mention_array,train_list,lable_list in pretrain.generate_pretrain_case(cases,gold_chain,network_model):
+
+                #cost_this_turn += network_model.pre_train_step(single_mention_array,train_list,lable_list,lr,l2_lambda,dropout_rate)[0]
+
+                if lable_list[0] == 1:
+                    neg_num += 1
+                    ana_cost,ana_result = network_model.ana_train_step(single_mention_array,1,lr,l2_lambda,dropout_rate)
+                else:
+                    pos_num += 1
+                    ana_cost,ana_result = network_model.ana_train_step(single_mention_array,0,lr,l2_lambda,dropout_rate)
+                for intance,lable in zip(train_list,lable_list):
+                    mention_cost,mention_result = network_model.mention_train_step(intance,lable,lr,l2_lambda,dropout_rate)
+
+            done_num += 1
+            if done_num == 10:
+                break
+        lr = lr*0.99
+
+        save_f = file('./model/pretrain_manu_new/network_model_pretrain_pair.%s.%d'%(args.language,echo), 'wb')
+        cPickle.dump(network_model, save_f, protocol=cPickle.HIGHEST_PROTOCOL)
+        save_f.close()
+
+        end_time = timeit.default_timer()
+        print >> sys.stderr, "PreTrain",echo,"Total cost:",cost_this_turn
+        print >> sys.stderr, "POS:NEG",pos_num,neg_num
+        print >> sys.stderr, "lr",lr
+        print >> sys.stderr, "PreTRAINING Use %.3f seconds"%(end_time-start_time)
+        print "Weight Sum",network_model.get_weight_sum()
+
+        ## test performance after pretraining
+        dev_docs_for_test = []
+        num = 0
+        for cases,gold_chain in DataGenerate.case_generater(dev_docs,"dev",w2v):
+            ev_doc = policy_network.generate_policy_test(cases,gold_chain,network_model)
+            dev_docs_for_test.append(ev_doc)
+            num += 1
+            if num == 10:
+                break
+        print "Performance on DEV after PreTRAINING"
+        mp,mr,mf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.muc)
+        print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
+        bp,br,bf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.b_cubed)
+        print "BCUBED: recall: %f precision: %f  f1: %f"%(br,bp,bf)
+        cp,cr,cf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.ceafe)
+        print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
+        print "#################################################" 
+        sys.stdout.flush()
+
+    print >> sys.stderr, "Begin Normal Training"
+    for echo in range(30):
+
+        start_time = timeit.default_timer()
+        print "Pretrain ECHO:",echo
+        cost_this_turn = 0.0 
+        #print >> sys.stderr, network_model.get_weight_sum()
+        done_num = 0 
+        pos_num = 0 
+        neg_num = 0 
         for cases,gold_chain in DataGenerate.case_generater(train_docs,"train",w2v):
             if len(cases) >= 700:
                 continue
@@ -118,8 +179,8 @@ def main():
             ev_doc = policy_network.generate_policy_test(cases,gold_chain,network_model)
             dev_docs_for_test.append(ev_doc)
             num += 1
-            #if num == 10:
-            #    break
+            if num == 10:
+                break
         print "Performance on DEV after PreTRAINING"
         mp,mr,mf = evaluation.evaluate_documents(dev_docs_for_test,evaluation.muc)
         print "MUC: recall: %f precision: %f  f1: %f"%(mr,mp,mf)
@@ -129,6 +190,7 @@ def main():
         print "CEAF: recall: %f precision: %f  f1: %f"%(cr,cp,cf)
         print "#################################################" 
         sys.stdout.flush()
+
     return
 
     for echo in range(30,50):
